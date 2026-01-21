@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحليل نشاط المستشفيات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-right: 310px;
+        }
+        
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        header h1 i {
+            font-size: 32px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: minmax(700px,100%);
+            /* grid-template-columns: minmax(280px,20%) minmax(700px,77%); */
+            gap: 25px;
+        }
+
+        /* عشان التصميم يفضل تمام مع وضع التثبيت لازم اعمل ال 
+        .dashboard-container one column
+        
+        */
+        .sidebar{
+            position: fixed;
+            width: 300px;
+            top: 0;
+            margin-top: 20px;
+            height: 95vh;
+            background-color: white;
+            /* display: flex; */
+            align-items: center;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-size: 10px;
+        }
+        
+        .filters-panel {
+            background-color: white;
+            /* border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); */
+            height: fit-content;
+            margin: auto;
+        }
+        
+        .filters-panel h3 {
+            color: #1a73e8;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e8f0fe;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-group {
+            margin-bottom: 5px;
+        }
+        
+        .filter-group h4 {
+            margin-bottom: 15px;
+            color: #444;
+            font-size: 14px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+            font-size: 15px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        
+        .tabs-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            margin-right: 310px;
+        }
+        /* .tabs-header {
+            display: flex;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            position: fixed;
+            width: 240px;
+            bottom: 0;
+            right: 0;
+        } */
+
+
+
+
+
+        /* Add a wrapper with the same constraints */
+        .tabs-header-wrapper {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            max-width: 1400px;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none; /* Allow clicks to pass through wrapper */
+        }
+
+        .tabs-header {
+            display: grid;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            grid-template-columns: 140px 140px;
+            position: relative;
+            width: 240px;
+            margin-left: auto;
+            margin-right: 20px;
+            pointer-events: auto; /* Re-enable clicks for the tabs */
+            padding-right: 20px;
+        }
+
+        
+        .tab-btn {
+            width: 140px;
+            padding: 15px 5px;
+            text-align: right;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            white-space: nowrap;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn:hover {
+            color: #1a73e8;
+            background-color: #f8f9fa;
+        }
+        
+        .tab-btn.active {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+            background-color: #f8f9fa;
+        }
+        
+        .tab-content {
+            padding: 25px;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .all-stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s;
+            border: 1px solid #eee;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+        
+        .chart-container h3 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8f0fe;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .chart-toggle-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-toggle-btn {
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chart-toggle-btn:hover {
+            background-color: #e8f0fe;
+            transform: translateY(-2px);
+        }
+        
+        .chart-toggle-btn.active {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 8px rgba(26, 115, 232, 0.3);
+        }
+        
+        .chart-toggle-btn.active.months {
+            background-color: #34a853;
+        }
+        
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        thead {
+            background-color: #1a73e8;
+            color: white;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            color: #777;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .export-btn {
+            background-color: #34a853;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .export-btn:hover {
+            background-color: #2d9249;
+        }
+        
+        .reset-btn {
+            background-color: #fbbc05;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background-color: #e0a800;
+        }
+        
+        .specialty-info {
+            background-color: #e8f0fe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .specialty-info h4 {
+            color: #1a73e8;
+            font-size: 18px;
+        }
+        
+        .specialty-info .total-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        
+        @media (max-width: 1100px) {
+
+            header{
+                margin-right: 0;
+            }
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar{
+            position: static;
+            width: 100%;
+            height: 100%;
+            margin-top: 0;
+            display: block;
+        }
+
+
+            .filters-panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+            margin: auto;
+        }
+            .tabs-container {
+                margin-right: 0;
+            }
+
+
+
+
+            
+
+        /* Add a wrapper with the same constraints */
+        .tabs-header-wrapper {
+            position: static;
+            bottom: 0;
+            width: 100%;
+            max-width: 1400px;
+            left: 50%;
+            transform: translateX(0%);
+            pointer-events:all
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            width: 100%
+        }
+        
+        .tab-btn {
+            width: 25%;
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            white-space: nowrap;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+            
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .all-stats-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .all-stats-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            header h1 {
+                font-size: 22px;
+            }
+            
+            .tabs-header {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .chart-toggle-buttons {
+                width: 100%;
+            }
+            
+            .chart-toggle-btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .all-stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+        }
+
+        .display-none{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-hospital-alt"></i> الهيئة العامة للمستشفيات  والمعاهد التعليمية   </h1>
+            <p>عرض وتحليل بيانات نشاط المستشفيات حسب الشهر والتخصص والمنشأة الطبية</p>
+            <p>إدارة نظم المعلومات والتحول الرقمي</p>
+        </header>
+        
+        <div class="dashboard-container">
+            <div class="sidebar">
+
+                            <div class="filters-panel">
+                <h3><i class="fas fa-filter"></i> التحكم</h3>
+                
+                <div class="filter-group">
+                    <h4>اسم المستشفى</h4>
+                    <select id="hospitalFilter">
+                        <option value="all">جميع المستشفيات</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <h4>الشهر</h4>
+                    <select id="monthFilter">
+                        <option value="all">جميع الأشهر</option>
+                        <option value="يناير">يناير</option>
+                        <option value="فبراير">فبراير</option>
+                        <option value="مارس">مارس</option>
+                        <option value="ابريل">ابريل</option>
+                        <option value="مايو">مايو</option>
+                        <option value="يونيو">يونيو</option>
+                        <option value="يوليو">يوليو</option>
+                        <option value="اغسطس">اغسطس</option>
+                        <option value="سبتمبر">سبتمبر</option>
+                        <option value="اكتوبر">اكتوبر</option>
+                        <option value="نوفمبر">نوفمبر</option>
+                        <option value="ديسمبر">ديسمبر</option>
+                    </select>
+                </div>
+                
+                <button class="reset-btn" id="resetFilters">
+                    <i class="fas fa-redo"></i> إعادة تعيين
+                </button>
+            </div>
+            </div>
+            
+            <div class="dashboard-content">
+                <div class="tabs-container">
+                    <div class="tabs-header-wrapper">
+                        <div class="tabs-header" id="tabsHeader">
+                            <button class="tab-btn active" data-tab="all-stats">
+                                <i class="fas fa-chart-pie"></i> الإحصائيات الشاملة
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- تبويب الإحصائيات الشاملة -->
+                    <div id="all-stats" class="tab-content active">
+                        <div class="all-stats-container" id="allStatsContainer">
+                            <!-- سيتم ملء الإحصائيات ديناميكياً -->
+                        </div>
+                        
+                         <div class="chart-container display-none">
+                            <div class="chart-header">
+                                <h3><i class="fas fa-chart-bar"></i> <span id="chartTitle">النشاط حسب المستشفيات</span></h3>
+                                <div class="chart-toggle-buttons">
+                                    <button id="viewByHospitals" class="chart-toggle-btn active">
+                                        <i class="fas fa-hospital"></i> حسب المستشفيات
+                                    </button>
+                                    <button id="viewByMonths" class="chart-toggle-btn">
+                                        <i class="fas fa-calendar-alt"></i> حسب الشهور
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- <canvas id="mainChart"></canvas>-->
+                        </div> 
+                    </div>
+                    
+                    <!-- سيتم إضافة تبويبات التخصصات ديناميكياً -->
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2026 لوحة تحليل نشاط المستشفيات - جميع الحقوق محفوظة</p>
+            <p>آخر تحديث للبيانات: يناير 2026 <span>ادارة نظم المعلومات والتحول الرقمي</span> <span>د. عمرو جاد</span></p>
+            
+        </footer>
+    </div>
+
+
+
+    <script>
+
+
+
+   let dataaaa =  {
+  "الغسيل الكلوى": 1731,
+  "نشاط القسطرة": 87,
+  "نشاط المناظير": 458,
+  "نشاط العمليات": 899,
+  "النشاط الداخلى": 1127
+}
+
+
+        // بيانات JSON الأصلية
+const hospitalData = [
+  { "hospital": "احمد ماهر", "month": "يناير", "reception": 24637, "clinic": 31018, "dialysis": 1883, "catheter": 90, "endoscopy": 476, "surgeries": 760, "internal": 1310, "care": 220, "incubators": 17, "radiology": 12292, "labs": 63508, "births": 303, "deaths": 68 },
+  { "hospital": "احمد ماهر", "month": "فبراير", "reception": 19725, "clinic": 31390, "dialysis": 1749, "catheter": 87, "endoscopy": 560, "surgeries": 943, "internal": 1357, "care": 181, "incubators": 25, "radiology": 14261, "labs": 56253, "births": 229, "deaths": 74 },
+  { "hospital": "احمد ماهر", "month": "مارس", "reception": 22541, "clinic": 22760, "dialysis": 1899, "catheter": 85, "endoscopy": 400, "surgeries": 628, "internal": 982, "care": 190, "incubators": 28, "radiology": 13695, "labs": 50437, "births": 203, "deaths": 77 },
+  { "hospital": "احمد ماهر", "month": "ابريل", "reception": 25280, "clinic": 29257, "dialysis": 1799, "catheter": 66, "endoscopy": 460, "surgeries": 780, "internal": 980, "care": 195, "incubators": 25, "radiology": 13437, "labs": 53038, "births": 195, "deaths": 79 },
+  { "hospital": "احمد ماهر", "month": "مايو", "reception": 26290, "clinic": 32578, "dialysis": 1892, "catheter": 87, "endoscopy": 589, "surgeries": 913, "internal": 1239, "care": 203, "incubators": 30, "radiology": 14661, "labs": 57389, "births": 252, "deaths": 86 },
+  { "hospital": "احمد ماهر", "month": "يونيو", "reception": 24502, "clinic": 27135, "dialysis": 1731, "catheter": 87, "endoscopy": 458, "surgeries": 899, "internal": 1127, "care": 202, "incubators": 21, "radiology": 15520, "labs": 60989, "births": 238, "deaths": 76 },
+  { "hospital": "احمد ماهر", "month": "يوليو", "reception": 26975, "clinic": 33597, "dialysis": 1784, "catheter": 88, "endoscopy": 606, "surgeries": 1077, "internal": 1375, "care": 234, "incubators": 31, "radiology": 16416, "labs": 61444, "births": 267, "deaths": 90 },
+  { "hospital": "احمد ماهر", "month": "اغسطس", "reception": 25389, "clinic": 33918, "dialysis": 1686, "catheter": 97, "endoscopy": 569, "surgeries": 1195, "internal": 1449, "care": 187, "incubators": 28, "radiology": 16599, "labs": 66450, "births": 291, "deaths": 62 },
+  { "hospital": "احمد ماهر", "month": "سبتمبر", "reception": 23624, "clinic": 30763, "dialysis": 2644, "catheter": 93, "endoscopy": 600, "surgeries": 1056, "internal": 1343, "care": 192, "incubators": 24, "radiology": 15318, "labs": 64022, "births": 246, "deaths": 50 },
+  { "hospital": "احمد ماهر", "month": "اكتوبر", "reception": 24063, "clinic": 33880, "dialysis": 2162, "catheter": 78, "endoscopy": 573, "surgeries": 1079, "internal": 1269, "care": 184, "incubators": 15, "radiology": 15638, "labs": 58159, "births": 257, "deaths": 56 },
+  { "hospital": "احمد ماهر", "month": "نوفمبر", "reception": 25226, "clinic": 30182, "dialysis": 2170, "catheter": 129, "endoscopy": 562, "surgeries": 992, "internal": 1355, "care": 176, "incubators": 21, "radiology": 15224, "labs": 61299, "births": 255, "deaths": 59 },
+  { "hospital": "احمد ماهر", "month": "ديسمبر", "reception": 23542, "clinic": 50333, "dialysis": 2210, "catheter": 114, "endoscopy": 581, "surgeries": 1003, "internal": 1469, "care": 175, "incubators": 19, "radiology": 15473, "labs": 64319, "births": 288, "deaths": 61 },
+  { "hospital": "الجمهورية", "month": "يناير", "reception": 0, "clinic": 1245, "dialysis": 377, "catheter": 0, "endoscopy": 26, "surgeries": 185, "internal": 267, "care": 72, "incubators": 4, "radiology": 1342, "labs": 17366, "births": 9, "deaths": 24 },
+  { "hospital": "الجمهورية", "month": "فبراير", "reception": 0, "clinic": 1404, "dialysis": 379, "catheter": 0, "endoscopy": 28, "surgeries": 226, "internal": 286, "care": 55, "incubators": 2, "radiology": 1411, "labs": 13201, "births": 3, "deaths": 14 },
+  { "hospital": "الجمهورية", "month": "مارس", "reception": 0, "clinic": 916, "dialysis": 455, "catheter": 0, "endoscopy": 22, "surgeries": 119, "internal": 191, "care": 43, "incubators": 2, "radiology": 822, "labs": 12959, "births": 5, "deaths": 20 },
+  { "hospital": "الجمهورية", "month": "ابريل", "reception": 0, "clinic": 1095, "dialysis": 445, "catheter": 0, "endoscopy": 11, "surgeries": 158, "internal": 233, "care": 48, "incubators": 5, "radiology": 1114, "labs": 7684, "births": 5, "deaths": 16 },
+  { "hospital": "الجمهورية", "month": "مايو", "reception": 0, "clinic": 1146, "dialysis": 379, "catheter": 0, "endoscopy": 19, "surgeries": 236, "internal": 349, "care": 59, "incubators": 8, "radiology": 995, "labs": 10694, "births": 7, "deaths": 13 },
+  { "hospital": "الجمهورية", "month": "يونيو", "reception": 0, "clinic": 922, "dialysis": 381, "catheter": 0, "endoscopy": 14, "surgeries": 185, "internal": 264, "care": 53, "incubators": 5, "radiology": 1110, "labs": 9550, "births": 5, "deaths": 17 },
+  { "hospital": "الجمهورية", "month": "يوليو", "reception": 0, "clinic": 1190, "dialysis": 377, "catheter": 0, "endoscopy": 32, "surgeries": 264, "internal": 333, "care": 56, "incubators": 8, "radiology": 1267, "labs": 9517, "births": 5, "deaths": 14 },
+  { "hospital": "الجمهورية", "month": "اغسطس", "reception": 0, "clinic": 1193, "dialysis": 377, "catheter": 0, "endoscopy": 28, "surgeries": 240, "internal": 313, "care": 69, "incubators": 4, "radiology": 1191, "labs": 9781, "births": 3, "deaths": 17 },
+  { "hospital": "الجمهورية", "month": "سبتمبر", "reception": 0, "clinic": 1123, "dialysis": 10, "catheter": 0, "endoscopy": 18, "surgeries": 263, "internal": 350, "care": 58, "incubators": 6, "radiology": 1285, "labs": 10466, "births": 4, "deaths": 8 },
+  { "hospital": "الجمهورية", "month": "اكتوبر", "reception": 0, "clinic": 1281, "dialysis": 21, "catheter": 0, "endoscopy": 14, "surgeries": 148, "internal": 271, "care": 40, "incubators": 2, "radiology": 1040, "labs": 6058, "births": 4, "deaths": 11 },
+  { "hospital": "الجمهورية", "month": "نوفمبر", "reception": 0, "clinic": 1156, "dialysis": 0, "catheter": 0, "endoscopy": 27, "surgeries": 207, "internal": 258, "care": 56, "incubators": 4, "radiology": 1423, "labs": 10035, "births": 3, "deaths": 12 },
+  { "hospital": "الجمهورية", "month": "ديسمبر", "reception": 0, "clinic": 1374, "dialysis": 0, "catheter": 0, "endoscopy": 20, "surgeries": 187, "internal": 287, "care": 60, "incubators": 5, "radiology": 1406, "labs": 9020, "births": 3, "deaths": 15 },
+  { "hospital": "المطرية", "month": "يناير", "reception": 24231, "clinic": 28885, "dialysis": 0, "catheter": 182, "endoscopy": 115, "surgeries": 1976, "internal": 952, "care": 608, "incubators": 31, "radiology": 14645, "labs": 56660, "births": 207, "deaths": 150 },
+  { "hospital": "المطرية", "month": "فبراير", "reception": 22340, "clinic": 25905, "dialysis": 0, "catheter": 182, "endoscopy": 135, "surgeries": 1906, "internal": 1055, "care": 512, "incubators": 35, "radiology": 14381, "labs": 51146, "births": 140, "deaths": 136 },
+  { "hospital": "المطرية", "month": "مارس", "reception": 21939, "clinic": 19462, "dialysis": 0, "catheter": 169, "endoscopy": 80, "surgeries": 2223, "internal": 817, "care": 597, "incubators": 29, "radiology": 14004, "labs": 40679, "births": 138, "deaths": 140 },
+  { "hospital": "المطرية", "month": "ابريل", "reception": 21308, "clinic": 24795, "dialysis": 0, "catheter": 138, "endoscopy": 134, "surgeries": 2160, "internal": 905, "care": 444, "incubators": 27, "radiology": 14555, "labs": 49471, "births": 145, "deaths": 119 },
+  { "hospital": "المطرية", "month": "مايو", "reception": 20353, "clinic": 26960, "dialysis": 0, "catheter": 142, "endoscopy": 139, "surgeries": 2753, "internal": 1052, "care": 463, "incubators": 32, "radiology": 13885, "labs": 47199, "births": 141, "deaths": 115 },
+  { "hospital": "المطرية", "month": "يونيو", "reception": 19881, "clinic": 23331, "dialysis": 0, "catheter": 154, "endoscopy": 84, "surgeries": 3516, "internal": 895, "care": 431, "incubators": 37, "radiology": 15648, "labs": 41167, "births": 177, "deaths": 110 },
+  { "hospital": "المطرية", "month": "يوليو", "reception": 21523, "clinic": 27170, "dialysis": 0, "catheter": 181, "endoscopy": 114, "surgeries": 3811, "internal": 1124, "care": 482, "incubators": 46, "radiology": 16018, "labs": 52536, "births": 178, "deaths": 134 },
+  { "hospital": "المطرية", "month": "اغسطس", "reception": 20053, "clinic": 27882, "dialysis": 0, "catheter": 198, "endoscopy": 188, "surgeries": 3764, "internal": 1254, "care": 479, "incubators": 39, "radiology": 16763, "labs": 53889, "births": 179, "deaths": 126 },
+  { "hospital": "المطرية", "month": "سبتمبر", "reception": 20856, "clinic": 27649, "dialysis": 0, "catheter": 166, "endoscopy": 155, "surgeries": 3785, "internal": 1278, "care": 485, "incubators": 48, "radiology": 14718, "labs": 52065, "births": 182, "deaths": 126 },
+  { "hospital": "المطرية", "month": "اكتوبر", "reception": 20223, "clinic": 27598, "dialysis": 6, "catheter": 198, "endoscopy": 161, "surgeries": 4898, "internal": 1249, "care": 534, "incubators": 40, "radiology": 16386, "labs": 41871, "births": 192, "deaths": 146 },
+  { "hospital": "المطرية", "month": "نوفمبر", "reception": 19794, "clinic": 25731, "dialysis": 15, "catheter": 145, "endoscopy": 135, "surgeries": 4814, "internal": 1173, "care": 480, "incubators": 31, "radiology": 15781, "labs": 50167, "births": 184, "deaths": 142 },
+  { "hospital": "المطرية", "month": "ديسمبر", "reception": 20808, "clinic": 23642, "dialysis": 0, "catheter": 160, "endoscopy": 136, "surgeries": 5238, "internal": 1201, "care": 512, "incubators": 46, "radiology": 15877, "labs": 52738, "births": 193, "deaths": 187 },
+  { "hospital": "الساحل", "month": "يناير", "reception": 11394, "clinic": 22925, "dialysis": 1590, "catheter": 69, "endoscopy": 158, "surgeries": 5419, "internal": 1035, "care": 255, "incubators": 26, "radiology": 15876, "labs": 78547, "births": 109, "deaths": 42 },
+  { "hospital": "الساحل", "month": "فبراير", "reception": 9296, "clinic": 21163, "dialysis": 1478, "catheter": 73, "endoscopy": 104, "surgeries": 4909, "internal": 981, "care": 220, "incubators": 22, "radiology": 15185, "labs": 68372, "births": 89, "deaths": 38 },
+  { "hospital": "الساحل", "month": "مارس", "reception": 10623, "clinic": 21760, "dialysis": 1534, "catheter": 84, "endoscopy": 88, "surgeries": 5204, "internal": 821, "care": 241, "incubators": 13, "radiology": 15853, "labs": 64072, "births": 101, "deaths": 45 },
+  { "hospital": "الساحل", "month": "ابريل", "reception": 10296, "clinic": 22966, "dialysis": 1590, "catheter": 69, "endoscopy": 114, "surgeries": 4815, "internal": 931, "care": 233, "incubators": 21, "radiology": 13929, "labs": 71916, "births": 113, "deaths": 31 },
+  { "hospital": "الساحل", "month": "مايو", "reception": 10590, "clinic": 23122, "dialysis": 1621, "catheter": 73, "endoscopy": 164, "surgeries": 6080, "internal": 1033, "care": 248, "incubators": 17, "radiology": 15766, "labs": 74824, "births": 95, "deaths": 46 },
+  { "hospital": "الساحل", "month": "يونيو", "reception": 10572, "clinic": 23488, "dialysis": 1532, "catheter": 75, "endoscopy": 131, "surgeries": 5465, "internal": 941, "care": 245, "incubators": 19, "radiology": 15868, "labs": 72695, "births": 95, "deaths": 49 },
+  { "hospital": "الساحل", "month": "يوليو", "reception": 11860, "clinic": 29277, "dialysis": 1564, "catheter": 70, "endoscopy": 200, "surgeries": 4244, "internal": 1174, "care": 258, "incubators": 22, "radiology": 17447, "labs": 87342, "births": 143, "deaths": 70 },
+  { "hospital": "الساحل", "month": "اغسطس", "reception": 11799, "clinic": 29468, "dialysis": 1535, "catheter": 88, "endoscopy": 218, "surgeries": 3935, "internal": 1180, "care": 273, "incubators": 12, "radiology": 16584, "labs": 95929, "births": 105, "deaths": 44 },
+  { "hospital": "الساحل", "month": "سبتمبر", "reception": 11544, "clinic": 28288, "dialysis": 1481, "catheter": 86, "endoscopy": 191, "surgeries": 4585, "internal": 1105, "care": 267, "incubators": 25, "radiology": 17040, "labs": 94006, "births": 106, "deaths": 54 },
+  { "hospital": "الساحل", "month": "اكتوبر", "reception": 11432, "clinic": 30001, "dialysis": 1509, "catheter": 109, "endoscopy": 200, "surgeries": 4472, "internal": 1222, "care": 294, "incubators": 21, "radiology": 17680, "labs": 82980, "births": 117, "deaths": 49 },
+  { "hospital": "الساحل", "month": "نوفمبر", "reception": 11011, "clinic": 28508, "dialysis": 1498, "catheter": 97, "endoscopy": 200, "surgeries": 3815, "internal": 1116, "care": 284, "incubators": 16, "radiology": 17028, "labs": 91823, "births": 108, "deaths": 53 },
+  { "hospital": "الساحل", "month": "ديسمبر", "reception": 11017, "clinic": 28800, "dialysis": 1549, "catheter": 103, "endoscopy": 208, "surgeries": 3706, "internal": 1017, "care": 304, "incubators": 25, "radiology": 16213, "labs": 84771, "births": 141, "deaths": 66 },
+  { "hospital": "الجلاء", "month": "يناير", "reception": 4135, "clinic": 9519, "dialysis": 0, "catheter": 0, "endoscopy": 22, "surgeries": 1231, "internal": 1426, "care": 76, "incubators": 75, "radiology": 2618, "labs": 13132, "births": 825, "deaths": 20 },
+  { "hospital": "الجلاء", "month": "فبراير", "reception": 3180, "clinic": 8848, "dialysis": 0, "catheter": 0, "endoscopy": 26, "surgeries": 865, "internal": 1148, "care": 60, "incubators": 70, "radiology": 2664, "labs": 10916, "births": 674, "deaths": 12 },
+  { "hospital": "الجلاء", "month": "مارس", "reception": 3513, "clinic": 6278, "dialysis": 0, "catheter": 0, "endoscopy": 10, "surgeries": 1030, "internal": 1101, "care": 54, "incubators": 66, "radiology": 2119, "labs": 9430, "births": 722, "deaths": 13 },
+  { "hospital": "الجلاء", "month": "ابريل", "reception": 3129, "clinic": 8999, "dialysis": 0, "catheter": 0, "endoscopy": 18, "surgeries": 1067, "internal": 1174, "care": 42, "incubators": 70, "radiology": 2780, "labs": 10428, "births": 711, "deaths": 14 },
+  { "hospital": "الجلاء", "month": "مايو", "reception": 3096, "clinic": 10281, "dialysis": 0, "catheter": 0, "endoscopy": 19, "surgeries": 1110, "internal": 1256, "care": 51, "incubators": 78, "radiology": 3227, "labs": 11313, "births": 723, "deaths": 16 },
+  { "hospital": "الجلاء", "month": "يونيو", "reception": 3229, "clinic": 8967, "dialysis": 0, "catheter": 0, "endoscopy": 21, "surgeries": 1034, "internal": 1350, "care": 44, "incubators": 64, "radiology": 3204, "labs": 14431, "births": 806, "deaths": 15 },
+  { "hospital": "الجلاء", "month": "يوليو", "reception": 3606, "clinic": 11024, "dialysis": 0, "catheter": 0, "endoscopy": 21, "surgeries": 1068, "internal": 1455, "care": 52, "incubators": 72, "radiology": 3764, "labs": 13675, "births": 838, "deaths": 19 },
+  { "hospital": "الجلاء", "month": "اغسطس", "reception": 3497, "clinic": 10334, "dialysis": 0, "catheter": 0, "endoscopy": 20, "surgeries": 1815, "internal": 1513, "care": 65, "incubators": 63, "radiology": 3467, "labs": 14247, "births": 948, "deaths": 16 },
+  { "hospital": "الجلاء", "month": "سبتمبر", "reception": 3184, "clinic": 9500, "dialysis": 0, "catheter": 0, "endoscopy": 19, "surgeries": 1311, "internal": 416, "care": 62, "incubators": 56, "radiology": 3019, "labs": 9942, "births": 835, "deaths": 9 },
+  { "hospital": "الجلاء", "month": "اكتوبر", "reception": 4044, "clinic": 10772, "dialysis": 0, "catheter": 0, "endoscopy": 27, "surgeries": 1030, "internal": 1352, "care": 52, "incubators": 73, "radiology": 3199, "labs": 12301, "births": 831, "deaths": 14 },
+  { "hospital": "الجلاء", "month": "نوفمبر", "reception": 3561, "clinic": 10815, "dialysis": 0, "catheter": 0, "endoscopy": 23, "surgeries": 959, "internal": 1320, "care": 59, "incubators": 53, "radiology": 3101, "labs": 13689, "births": 770, "deaths": 5 },
+  { "hospital": "الجلاء", "month": "ديسمبر", "reception": 4479, "clinic": 10817, "dialysis": 0, "catheter": 0, "endoscopy": 24, "surgeries": 1074, "internal": 1375, "care": 55, "incubators": 84, "radiology": 3075, "labs": 12429, "births": 819, "deaths": 22 },
+  { "hospital": "حميات امبابة", "month": "يناير", "reception": 883, "clinic": 17271, "dialysis": 1420, "catheter": 0, "endoscopy": 110, "surgeries": 8, "internal": 355, "care": 75, "incubators": 0, "radiology": 1868, "labs": 29542, "births": 0, "deaths": 25 },
+  { "hospital": "حميات امبابة", "month": "فبراير", "reception": 386, "clinic": 11314, "dialysis": 1268, "catheter": 0, "endoscopy": 121, "surgeries": 7, "internal": 255, "care": 77, "incubators": 0, "radiology": 1421, "labs": 40418, "births": 0, "deaths": 37 },
+  { "hospital": "حميات امبابة", "month": "مارس", "reception": 486, "clinic": 11827, "dialysis": 1413, "catheter": 0, "endoscopy": 83, "surgeries": 13, "internal": 254, "care": 93, "incubators": 0, "radiology": 1400, "labs": 32558, "births": 0, "deaths": 50 },
+  { "hospital": "حميات امبابة", "month": "ابريل", "reception": 530, "clinic": 14103, "dialysis": 1389, "catheter": 0, "endoscopy": 128, "surgeries": 10, "internal": 308, "care": 68, "incubators": 0, "radiology": 1524, "labs": 30733, "births": 0, "deaths": 46 },
+  { "hospital": "حميات امبابة", "month": "مايو", "reception": 704, "clinic": 13661, "dialysis": 1370, "catheter": 0, "endoscopy": 188, "surgeries": 8, "internal": 351, "care": 87, "incubators": 0, "radiology": 1951, "labs": 37776, "births": 0, "deaths": 34 },
+  { "hospital": "حميات امبابة", "month": "يونيو", "reception": 682, "clinic": 12353, "dialysis": 1375, "catheter": 0, "endoscopy": 92, "surgeries": 0, "internal": 240, "care": 90, "incubators": 0, "radiology": 1800, "labs": 38009, "births": 0, "deaths": 32 },
+  { "hospital": "حميات امبابة", "month": "يوليو", "reception": 908, "clinic": 13233, "dialysis": 1402, "catheter": 0, "endoscopy": 121, "surgeries": 5, "internal": 283, "care": 100, "incubators": 0, "radiology": 1900, "labs": 28507, "births": 0, "deaths": 35 },
+  { "hospital": "حميات امبابة", "month": "اغسطس", "reception": 778, "clinic": 12124, "dialysis": 1381, "catheter": 0, "endoscopy": 195, "surgeries": 2, "internal": 294, "care": 79, "incubators": 0, "radiology": 1907, "labs": 49468, "births": 0, "deaths": 26 },
+  { "hospital": "حميات امبابة", "month": "سبتمبر", "reception": 684, "clinic": 12239, "dialysis": 1361, "catheter": 0, "endoscopy": 192, "surgeries": 8, "internal": 255, "care": 80, "incubators": 0, "radiology": 1993, "labs": 78644, "births": 0, "deaths": 24 },
+  { "hospital": "حميات امبابة", "month": "اكتوبر", "reception": 625, "clinic": 14910, "dialysis": 1353, "catheter": 0, "endoscopy": 187, "surgeries": 11, "internal": 262, "care": 82, "incubators": 0, "radiology": 1995, "labs": 67863, "births": 0, "deaths": 34 },
+  { "hospital": "حميات امبابة", "month": "نوفمبر", "reception": 696, "clinic": 23460, "dialysis": 1308, "catheter": 0, "endoscopy": 204, "surgeries": 10, "internal": 354, "care": 114, "incubators": 0, "radiology": 2301, "labs": 57654, "births": 0, "deaths": 37 },
+  { "hospital": "حميات امبابة", "month": "ديسمبر", "reception": 724, "clinic": 25080, "dialysis": 1301, "catheter": 0, "endoscopy": 125, "surgeries": 9, "internal": 425, "care": 85, "incubators": 0, "radiology": 2297, "labs": 48144, "births": 0, "deaths": 39 },
+  { "hospital": "بنها", "month": "يناير", "reception": 7596, "clinic": 36011, "dialysis": 1648, "catheter": 111, "endoscopy": 145, "surgeries": 438, "internal": 987, "care": 273, "incubators": 16, "radiology": 5514, "labs": 5190, "births": 111, "deaths": 19 },
+  { "hospital": "بنها", "month": "فبراير", "reception": 7045, "clinic": 36017, "dialysis": 1526, "catheter": 104, "endoscopy": 166, "surgeries": 417, "internal": 1031, "care": 238, "incubators": 13, "radiology": 5065, "labs": 5333, "births": 98, "deaths": 23 },
+  { "hospital": "بنها", "month": "مارس", "reception": 6841, "clinic": 30270, "dialysis": 1700, "catheter": 78, "endoscopy": 110, "surgeries": 266, "internal": 741, "care": 220, "incubators": 9, "radiology": 4263, "labs": 5044, "births": 88, "deaths": 27 },
+  { "hospital": "بنها", "month": "ابريل", "reception": 9441, "clinic": 36136, "dialysis": 1590, "catheter": 68, "endoscopy": 127, "surgeries": 388, "internal": 848, "care": 229, "incubators": 10, "radiology": 5368, "labs": 9074, "births": 82, "deaths": 23 },
+  { "hospital": "بنها", "month": "مايو", "reception": 8670, "clinic": 36726, "dialysis": 1602, "catheter": 81, "endoscopy": 137, "surgeries": 461, "internal": 901, "care": 243, "incubators": 13, "radiology": 5433, "labs": 6243, "births": 92, "deaths": 27 },
+  { "hospital": "بنها", "month": "يونيو", "reception": 7148, "clinic": 33594, "dialysis": 1601, "catheter": 76, "endoscopy": 143, "surgeries": 755, "internal": 1042, "care": 217, "incubators": 18, "radiology": 4994, "labs": 8468, "births": 98, "deaths": 27 },
+  { "hospital": "بنها", "month": "يوليو", "reception": 11577, "clinic": 38881, "dialysis": 1692, "catheter": 116, "endoscopy": 177, "surgeries": 573, "internal": 1260, "care": 293, "incubators": 15, "radiology": 4578, "labs": 8030, "births": 114, "deaths": 23 },
+  { "hospital": "بنها", "month": "اغسطس", "reception": 10512, "clinic": 36621, "dialysis": 1624, "catheter": 91, "endoscopy": 206, "surgeries": 660, "internal": 1312, "care": 258, "incubators": 13, "radiology": 5360, "labs": 8251, "births": 123, "deaths": 22 },
+  { "hospital": "بنها", "month": "سبتمبر", "reception": 10557, "clinic": 31382, "dialysis": 1615, "catheter": 113, "endoscopy": 57, "surgeries": 549, "internal": 1093, "care": 252, "incubators": 23, "radiology": 5305, "labs": 7738, "births": 118, "deaths": 29 },
+  { "hospital": "بنها", "month": "اكتوبر", "reception": 10343, "clinic": 36787, "dialysis": 1650, "catheter": 149, "endoscopy": 169, "surgeries": 350, "internal": 1109, "care": 328, "incubators": 15, "radiology": 5637, "labs": 7640, "births": 99, "deaths": 25 },
+  { "hospital": "بنها", "month": "نوفمبر", "reception": 9924, "clinic": 39535, "dialysis": 1730, "catheter": 118, "endoscopy": 82, "surgeries": 404, "internal": 934, "care": 316, "incubators": 19, "radiology": 6288, "labs": 25996, "births": 100, "deaths": 41 },
+  { "hospital": "بنها", "month": "ديسمبر", "reception": 0, "clinic": 38908, "dialysis": 1890, "catheter": 114, "endoscopy": 87, "surgeries": 412, "internal": 823, "care": 294, "incubators": 6, "radiology": 5875, "labs": 21248, "births": 96, "deaths": 2 },
+  { "hospital": "شبين", "month": "يناير", "reception": 11300, "clinic": 14302, "dialysis": 1164, "catheter": 123, "endoscopy": 207, "surgeries": 908, "internal": 1732, "care": 581, "incubators": 31, "radiology": 10856, "labs": 36535, "births": 84, "deaths": 75 },
+  { "hospital": "شبين", "month": "فبراير", "reception": 9929, "clinic": 15441, "dialysis": 1020, "catheter": 163, "endoscopy": 189, "surgeries": 874, "internal": 1635, "care": 514, "incubators": 39, "radiology": 9699, "labs": 30763, "births": 85, "deaths": 68 },
+  { "hospital": "شبين", "month": "مارس", "reception": 10849, "clinic": 12412, "dialysis": 1069, "catheter": 0, "endoscopy": 145, "surgeries": 672, "internal": 1839, "care": 491, "incubators": 28, "radiology": 8738, "labs": 29628, "births": 60, "deaths": 69 },
+  { "hospital": "شبين", "month": "ابريل", "reception": 13084, "clinic": 15650, "dialysis": 1034, "catheter": 155, "endoscopy": 221, "surgeries": 762, "internal": 1635, "care": 488, "incubators": 21, "radiology": 9177, "labs": 34619, "births": 76, "deaths": 61 },
+  { "hospital": "شبين", "month": "مايو", "reception": 13526, "clinic": 16689, "dialysis": 1037, "catheter": 193, "endoscopy": 188, "surgeries": 772, "internal": 1870, "care": 550, "incubators": 23, "radiology": 10093, "labs": 35940, "births": 93, "deaths": 55 },
+  { "hospital": "شبين", "month": "يونيو", "reception": 13107, "clinic": 15453, "dialysis": 1041, "catheter": 167, "endoscopy": 221, "surgeries": 937, "internal": 1802, "care": 484, "incubators": 22, "radiology": 9615, "labs": 36602, "births": 76, "deaths": 58 },
+  { "hospital": "شبين", "month": "يوليو", "reception": 15107, "clinic": 18347, "dialysis": 1121, "catheter": 195, "endoscopy": 304, "surgeries": 1077, "internal": 2098, "care": 548, "incubators": 27, "radiology": 10128, "labs": 39836, "births": 88, "deaths": 74 },
+  { "hospital": "شبين", "month": "اغسطس", "reception": 13728, "clinic": 20285, "dialysis": 1086, "catheter": 183, "endoscopy": 241, "surgeries": 1139, "internal": 1989, "care": 520, "incubators": 35, "radiology": 9888, "labs": 38896, "births": 63, "deaths": 67 },
+  { "hospital": "شبين", "month": "سبتمبر", "reception": 13184, "clinic": 18531, "dialysis": 1112, "catheter": 138, "endoscopy": 236, "surgeries": 1184, "internal": 1791, "care": 518, "incubators": 31, "radiology": 9672, "labs": 39682, "births": 83, "deaths": 72 },
+  { "hospital": "شبين", "month": "اكتوبر", "reception": 14416, "clinic": 18940, "dialysis": 1097, "catheter": 148, "endoscopy": 224, "surgeries": 1076, "internal": 1875, "care": 510, "incubators": 24, "radiology": 9486, "labs": 37402, "births": 66, "deaths": 66 },
+  { "hospital": "شبين", "month": "نوفمبر", "reception": 12634, "clinic": 19341, "dialysis": 1110, "catheter": 161, "endoscopy": 237, "surgeries": 1002, "internal": 1714, "care": 492, "incubators": 23, "radiology": 10293, "labs": 41543, "births": 64, "deaths": 67 },
+  { "hospital": "شبين", "month": "ديسمبر", "reception": 12212, "clinic": 19678, "dialysis": 1189, "catheter": 192, "endoscopy": 228, "surgeries": 1034, "internal": 1864, "care": 572, "incubators": 30, "radiology": 9770, "labs": 41575, "births": 70, "deaths": 79 },
+  { "hospital": "كبد المحلة", "month": "يناير", "reception": 281, "clinic": 3724, "dialysis": 0, "catheter": 0, "endoscopy": 259, "surgeries": 45, "internal": 438, "care": 51, "incubators": 0, "radiology": 1075, "labs": 7042, "births": 0, "deaths": 28 },
+  { "hospital": "كبد المحلة", "month": "فبراير", "reception": 245, "clinic": 3052, "dialysis": 0, "catheter": 0, "endoscopy": 297, "surgeries": 32, "internal": 464, "care": 44, "incubators": 0, "radiology": 1049, "labs": 7105, "births": 0, "deaths": 22 },
+  { "hospital": "كبد المحلة", "month": "مارس", "reception": 270, "clinic": 3425, "dialysis": 0, "catheter": 0, "endoscopy": 234, "surgeries": 19, "internal": 379, "care": 51, "incubators": 0, "radiology": 878, "labs": 5271, "births": 0, "deaths": 25 },
+  { "hospital": "كبد المحلة", "month": "ابريل", "reception": 365, "clinic": 3882, "dialysis": 0, "catheter": 0, "endoscopy": 296, "surgeries": 34, "internal": 410, "care": 57, "incubators": 0, "radiology": 1171, "labs": 8560, "births": 0, "deaths": 31 },
+  { "hospital": "كبد المحلة", "month": "مايو", "reception": 333, "clinic": 3719, "dialysis": 0, "catheter": 0, "endoscopy": 351, "surgeries": 38, "internal": 445, "care": 49, "incubators": 0, "radiology": 1212, "labs": 7155, "births": 0, "deaths": 26 },
+  { "hospital": "كبد المحلة", "month": "يونيو", "reception": 312, "clinic": 3622, "dialysis": 0, "catheter": 0, "endoscopy": 315, "surgeries": 32, "internal": 413, "care": 45, "incubators": 0, "radiology": 1371, "labs": 5961, "births": 0, "deaths": 26 },
+  { "hospital": "كبد المحلة", "month": "يوليو", "reception": 304, "clinic": 4042, "dialysis": 0, "catheter": 0, "endoscopy": 407, "surgeries": 52, "internal": 497, "care": 49, "incubators": 0, "radiology": 1822, "labs": 8507, "births": 0, "deaths": 23 },
+  { "hospital": "كبد المحلة", "month": "اغسطس", "reception": 271, "clinic": 4066, "dialysis": 0, "catheter": 0, "endoscopy": 367, "surgeries": 52, "internal": 463, "care": 45, "incubators": 0, "radiology": 1587, "labs": 6400, "births": 0, "deaths": 29 },
+  { "hospital": "كبد المحلة", "month": "سبتمبر", "reception": 288, "clinic": 3951, "dialysis": 0, "catheter": 0, "endoscopy": 422, "surgeries": 49, "internal": 486, "care": 39, "incubators": 0, "radiology": 1666, "labs": 8090, "births": 0, "deaths": 17 },
+  { "hospital": "كبد المحلة", "month": "اكتوبر", "reception": 223, "clinic": 3650, "dialysis": 0, "catheter": 0, "endoscopy": 367, "surgeries": 48, "internal": 379, "care": 33, "incubators": 0, "radiology": 1258, "labs": 5438, "births": 0, "deaths": 16 },
+  { "hospital": "كبد المحلة", "month": "نوفمبر", "reception": 247, "clinic": 4116, "dialysis": 0, "catheter": 0, "endoscopy": 344, "surgeries": 50, "internal": 444, "care": 32, "incubators": 0, "radiology": 1242, "labs": 6475, "births": 0, "deaths": 17 },
+  { "hospital": "كبد المحلة", "month": "ديسمبر", "reception": 246, "clinic": 4018, "dialysis": 0, "catheter": 0, "endoscopy": 368, "surgeries": 57, "internal": 435, "care": 55, "incubators": 0, "radiology": 1480, "labs": 7444, "births": 0, "deaths": 36 },
+  { "hospital": "دمنهور", "month": "يناير", "reception": 9697, "clinic": 35801, "dialysis": 2495, "catheter": 245, "endoscopy": 391, "surgeries": 1607, "internal": 3767, "care": 309, "incubators": 47, "radiology": 11669, "labs": 46786, "births": 226, "deaths": 188 },
+  { "hospital": "دمنهور", "month": "فبراير", "reception": 7847, "clinic": 38370, "dialysis": 2310, "catheter": 224, "endoscopy": 400, "surgeries": 1680, "internal": 2969, "care": 259, "incubators": 27, "radiology": 10988, "labs": 47765, "births": 197, "deaths": 164 },
+  { "hospital": "دمنهور", "month": "مارس", "reception": 10320, "clinic": 28169, "dialysis": 2620, "catheter": 191, "endoscopy": 327, "surgeries": 1514, "internal": 2880, "care": 340, "incubators": 45, "radiology": 10717, "labs": 38320, "births": 213, "deaths": 173 },
+  { "hospital": "دمنهور", "month": "ابريل", "reception": 10604, "clinic": 34599, "dialysis": 2515, "catheter": 196, "endoscopy": 336, "surgeries": 1555, "internal": 3058, "care": 272, "incubators": 30, "radiology": 11240, "labs": 48211, "births": 185, "deaths": 170 },
+  { "hospital": "دمنهور", "month": "مايو", "reception": 10783, "clinic": 38846, "dialysis": 2601, "catheter": 261, "endoscopy": 361, "surgeries": 1753, "internal": 3429, "care": 271, "incubators": 38, "radiology": 11605, "labs": 42815, "births": 180, "deaths": 165 },
+  { "hospital": "دمنهور", "month": "يونيو", "reception": 12050, "clinic": 31864, "dialysis": 2509, "catheter": 226, "endoscopy": 324, "surgeries": 2056, "internal": 3232, "care": 239, "incubators": 50, "radiology": 11214, "labs": 41233, "births": 274, "deaths": 151 },
+  { "hospital": "دمنهور", "month": "يوليو", "reception": 12768, "clinic": 40859, "dialysis": 2572, "catheter": 270, "endoscopy": 426, "surgeries": 2273, "internal": 3479, "care": 275, "incubators": 45, "radiology": 11914, "labs": 37368, "births": 241, "deaths": 154 },
+  { "hospital": "دمنهور", "month": "اغسطس", "reception": 12939, "clinic": 43957, "dialysis": 2600, "catheter": 284, "endoscopy": 436, "surgeries": 2602, "internal": 3610, "care": 262, "incubators": 46, "radiology": 12394, "labs": 43887, "births": 204, "deaths": 178 },
+  { "hospital": "دمنهور", "month": "سبتمبر", "reception": 12570, "clinic": 41258, "dialysis": 2560, "catheter": 242, "endoscopy": 433, "surgeries": 2408, "internal": 3443, "care": 267, "incubators": 31, "radiology": 11904, "labs": 43098, "births": 204, "deaths": 157 },
+  { "hospital": "دمنهور", "month": "اكتوبر", "reception": 11940, "clinic": 40944, "dialysis": 2524, "catheter": 297, "endoscopy": 405, "surgeries": 2246, "internal": 3435, "care": 276, "incubators": 35, "radiology": 12511, "labs": 40908, "births": 200, "deaths": 159 },
+  { "hospital": "دمنهور", "month": "نوفمبر", "reception": 11700, "clinic": 42651, "dialysis": 2560, "catheter": 247, "endoscopy": 436, "surgeries": 2256, "internal": 3327, "care": 276, "incubators": 34, "radiology": 12277, "labs": 43021, "births": 196, "deaths": 190 },
+  { "hospital": "دمنهور", "month": "ديسمبر", "reception": 10752, "clinic": 39512, "dialysis": 2569, "catheter": 278, "endoscopy": 475, "surgeries": 2287, "internal": 3405, "care": 274, "incubators": 26, "radiology": 12542, "labs": 44483, "births": 189, "deaths": 191 },
+  { "hospital": "دنشال", "month": "يناير", "reception": 0, "clinic": 946, "dialysis": 0, "catheter": 0, "endoscopy": 151, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 37, "labs": 139, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "فبراير", "reception": 0, "clinic": 814, "dialysis": 0, "catheter": 0, "endoscopy": 140, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 62, "labs": 73, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "مارس", "reception": 0, "clinic": 486, "dialysis": 0, "catheter": 0, "endoscopy": 76, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 69, "labs": 55, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "ابريل", "reception": 0, "clinic": 701, "dialysis": 0, "catheter": 0, "endoscopy": 146, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 61, "labs": 102, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "مايو", "reception": 0, "clinic": 767, "dialysis": 0, "catheter": 0, "endoscopy": 130, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 81, "labs": 110, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "يونيو", "reception": 0, "clinic": 547, "dialysis": 0, "catheter": 0, "endoscopy": 86, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 59, "labs": 90, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "يوليو", "reception": 0, "clinic": 711, "dialysis": 0, "catheter": 0, "endoscopy": 117, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 94, "labs": 90, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "اغسطس", "reception": 0, "clinic": 926, "dialysis": 0, "catheter": 0, "endoscopy": 148, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 65, "labs": 70, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "سبتمبر", "reception": 0, "clinic": 870, "dialysis": 0, "catheter": 0, "endoscopy": 151, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 64, "labs": 70, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "اكتوبر", "reception": 0, "clinic": 851, "dialysis": 0, "catheter": 0, "endoscopy": 143, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 42, "labs": 86, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "نوفمبر", "reception": 0, "clinic": 923, "dialysis": 0, "catheter": 0, "endoscopy": 140, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 11, "labs": 70, "births": 0, "deaths": 0 },
+  { "hospital": "دنشال", "month": "ديسمبر", "reception": 0, "clinic": 1030, "dialysis": 0, "catheter": 0, "endoscopy": 116, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 21, "labs": 66, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "يناير", "reception": 0, "clinic": 3429, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 894, "labs": 2665, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "فبراير", "reception": 0, "clinic": 3755, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 1034, "labs": 2768, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "مارس", "reception": 0, "clinic": 3041, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 646, "labs": 1865, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "ابريل", "reception": 0, "clinic": 3674, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 903, "labs": 3067, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "مايو", "reception": 0, "clinic": 4318, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 1012, "labs": 3203, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "يونيو", "reception": 0, "clinic": 3748, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 882, "labs": 2523, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "يوليو", "reception": 0, "clinic": 4190, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 1007, "labs": 2697, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "اغسطس", "reception": 0, "clinic": 3866, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 858, "labs": 2668, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "سبتمبر", "reception": 0, "clinic": 3596, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 876, "labs": 2550, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "اكتوبر", "reception": 0, "clinic": 3531, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 870, "labs": 3228, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "نوفمبر", "reception": 0, "clinic": 3495, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 1010, "labs": 2801, "births": 0, "deaths": 0 },
+  { "hospital": "الاسماعيلية", "month": "ديسمبر", "reception": 0, "clinic": 4041, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 1182, "labs": 2735, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "يناير", "reception": 1472, "clinic": 3096, "dialysis": 527, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 7, "care": 1, "incubators": 1, "radiology": 145, "labs": 1123, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "فبراير", "reception": 1095, "clinic": 2764, "dialysis": 515, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 1, "incubators": 0, "radiology": 77, "labs": 890, "births": 0, "deaths": 1 },
+  { "hospital": "المبرة", "month": "مارس", "reception": 209, "clinic": 2251, "dialysis": 563, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 56, "labs": 672, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "ابريل", "reception": 0, "clinic": 3188, "dialysis": 558, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 79, "labs": 917, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "مايو", "reception": 0, "clinic": 3198, "dialysis": 554, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 2, "incubators": 0, "radiology": 83, "labs": 882, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "يونيو", "reception": 0, "clinic": 2502, "dialysis": 568, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 33, "labs": 709, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "يوليو", "reception": 0, "clinic": 3935, "dialysis": 625, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 3, "incubators": 0, "radiology": 24, "labs": 1094, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "اغسطس", "reception": 0, "clinic": 3893, "dialysis": 634, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 1, "incubators": 0, "radiology": 30, "labs": 574, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "سبتمبر", "reception": 0, "clinic": 3696, "dialysis": 592, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 2, "incubators": 0, "radiology": 35, "labs": 572, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "اكتوبر", "reception": 0, "clinic": 3147, "dialysis": 284, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 9, "labs": 799, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "نوفمبر", "reception": 0, "clinic": 2485, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 5, "labs": 113, "births": 0, "deaths": 0 },
+  { "hospital": "المبرة", "month": "ديسمبر", "reception": 0, "clinic": 1782, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 90, "births": 0, "deaths": 0 },
+  { "hospital": "الاحرار", "month": "يناير", "reception": 13768, "clinic": 22254, "dialysis": 1249, "catheter": 137, "endoscopy": 288, "surgeries": 3144, "internal": 1222, "care": 260, "incubators": 50, "radiology": 9251, "labs": 57119, "births": 106, "deaths": 56 },
+  { "hospital": "الاحرار", "month": "فبراير", "reception": 10742, "clinic": 21904, "dialysis": 1148, "catheter": 152, "endoscopy": 235, "surgeries": 2653, "internal": 1149, "care": 241, "incubators": 50, "radiology": 8567, "labs": 61676, "births": 124, "deaths": 63 },
+  { "hospital": "الاحرار", "month": "مارس", "reception": 9763, "clinic": 16647, "dialysis": 1333, "catheter": 89, "endoscopy": 176, "surgeries": 2629, "internal": 1001, "care": 220, "incubators": 40, "radiology": 7818, "labs": 72408, "births": 137, "deaths": 56 },
+  { "hospital": "الاحرار", "month": "ابريل", "reception": 11984, "clinic": 22089, "dialysis": 1252, "catheter": 136, "endoscopy": 243, "surgeries": 2412, "internal": 1122, "care": 238, "incubators": 40, "radiology": 9250, "labs": 61788, "births": 133, "deaths": 48 },
+  { "hospital": "الاحرار", "month": "مايو", "reception": 12711, "clinic": 20928, "dialysis": 1294, "catheter": 184, "endoscopy": 304, "surgeries": 2636, "internal": 1246, "care": 239, "incubators": 34, "radiology": 8835, "labs": 53832, "births": 115, "deaths": 61 },
+  { "hospital": "الاحرار", "month": "يونيو", "reception": 10661, "clinic": 18849, "dialysis": 1282, "catheter": 165, "endoscopy": 293, "surgeries": 2868, "internal": 1175, "care": 222, "incubators": 54, "radiology": 8604, "labs": 50578, "births": 150, "deaths": 45 },
+  { "hospital": "الاحرار", "month": "يوليو", "reception": 12738, "clinic": 18849, "dialysis": 1347, "catheter": 182, "endoscopy": 341, "surgeries": 2724, "internal": 1250, "care": 242, "incubators": 61, "radiology": 9336, "labs": 46883, "births": 163, "deaths": 74 },
+  { "hospital": "الاحرار", "month": "اغسطس", "reception": 12968, "clinic": 26295, "dialysis": 1279, "catheter": 229, "endoscopy": 259, "surgeries": 2874, "internal": 1055, "care": 243, "incubators": 44, "radiology": 9297, "labs": 56909, "births": 175, "deaths": 68 },
+  { "hospital": "الاحرار", "month": "سبتمبر", "reception": 11931, "clinic": 28113, "dialysis": 1273, "catheter": 186, "endoscopy": 260, "surgeries": 2775, "internal": 1114, "care": 241, "incubators": 41, "radiology": 9078, "labs": 61279, "births": 167, "deaths": 42 },
+  { "hospital": "الاحرار", "month": "اكتوبر", "reception": 14594, "clinic": 24482, "dialysis": 1269, "catheter": 200, "endoscopy": 254, "surgeries": 2797, "internal": 1139, "care": 229, "incubators": 47, "radiology": 9057, "labs": 72467, "births": 180, "deaths": 68 },
+  { "hospital": "الاحرار", "month": "نوفمبر", "reception": 12606, "clinic": 28677, "dialysis": 1103, "catheter": 172, "endoscopy": 242, "surgeries": 2767, "internal": 1114, "care": 259, "incubators": 47, "radiology": 8861, "labs": 52326, "births": 161, "deaths": 52 },
+  { "hospital": "الاحرار", "month": "ديسمبر", "reception": 12958, "clinic": 29156, "dialysis": 1258, "catheter": 173, "endoscopy": 277, "surgeries": 2585, "internal": 1199, "care": 271, "incubators": 47, "radiology": 9031, "labs": 50525, "births": 153, "deaths": 72 },
+  { "hospital": "سوهاج", "month": "يناير", "reception": 10764, "clinic": 13232, "dialysis": 794, "catheter": 0, "endoscopy": 78, "surgeries": 1151, "internal": 1154, "care": 157, "incubators": 88, "radiology": 4061, "labs": 18977, "births": 233, "deaths": 21 },
+  { "hospital": "سوهاج", "month": "فبراير", "reception": 8708, "clinic": 12710, "dialysis": 737, "catheter": 0, "endoscopy": 70, "surgeries": 1195, "internal": 1046, "care": 160, "incubators": 43, "radiology": 4335, "labs": 19272, "births": 209, "deaths": 12 },
+  { "hospital": "سوهاج", "month": "مارس", "reception": 9065, "clinic": 11576, "dialysis": 839, "catheter": 0, "endoscopy": 53, "surgeries": 957, "internal": 906, "care": 147, "incubators": 113, "radiology": 3720, "labs": 19154, "births": 166, "deaths": 8 },
+  { "hospital": "سوهاج", "month": "ابريل", "reception": 11826, "clinic": 12329, "dialysis": 835, "catheter": 0, "endoscopy": 75, "surgeries": 1085, "internal": 1056, "care": 154, "incubators": 88, "radiology": 4402, "labs": 19320, "births": 233, "deaths": 11 },
+  { "hospital": "سوهاج", "month": "مايو", "reception": 12413, "clinic": 14192, "dialysis": 816, "catheter": 0, "endoscopy": 90, "surgeries": 1201, "internal": 1231, "care": 134, "incubators": 90, "radiology": 3359, "labs": 23200, "births": 162, "deaths": 10 },
+  { "hospital": "سوهاج", "month": "يونيو", "reception": 12043, "clinic": 12111, "dialysis": 790, "catheter": 0, "endoscopy": 88, "surgeries": 1402, "internal": 1239, "care": 133, "incubators": 86, "radiology": 3947, "labs": 19719, "births": 241, "deaths": 9 },
+  { "hospital": "سوهاج", "month": "يوليو", "reception": 11440, "clinic": 13285, "dialysis": 795, "catheter": 0, "endoscopy": 106, "surgeries": 1441, "internal": 1407, "care": 151, "incubators": 77, "radiology": 4282, "labs": 18272, "births": 277, "deaths": 11 },
+  { "hospital": "سوهاج", "month": "اغسطس", "reception": 10600, "clinic": 14211, "dialysis": 777, "catheter": 0, "endoscopy": 116, "surgeries": 1553, "internal": 1470, "care": 142, "incubators": 66, "radiology": 4282, "labs": 18630, "births": 281, "deaths": 20 },
+  { "hospital": "سوهاج", "month": "سبتمبر", "reception": 9905, "clinic": 12961, "dialysis": 748, "catheter": 0, "endoscopy": 99, "surgeries": 1201, "internal": 1189, "care": 124, "incubators": 44, "radiology": 4081, "labs": 18204, "births": 245, "deaths": 14 },
+  { "hospital": "سوهاج", "month": "اكتوبر", "reception": 11222, "clinic": 12891, "dialysis": 764, "catheter": 0, "endoscopy": 81, "surgeries": 1350, "internal": 1248, "care": 136, "incubators": 77, "radiology": 4299, "labs": 16217, "births": 272, "deaths": 10 },
+  { "hospital": "سوهاج", "month": "نوفمبر", "reception": 12830, "clinic": 14586, "dialysis": 788, "catheter": 0, "endoscopy": 85, "surgeries": 1204, "internal": 1182, "care": 116, "incubators": 50, "radiology": 4209, "labs": 15918, "births": 218, "deaths": 17 },
+  { "hospital": "سوهاج", "month": "ديسمبر", "reception": 11002, "clinic": 15098, "dialysis": 847, "catheter": 0, "endoscopy": 76, "surgeries": 1149, "internal": 1110, "care": 118, "incubators": 72, "radiology": 3967, "labs": 14793, "births": 324, "deaths": 11 },
+  { "hospital": "القلب الرئيسى", "month": "يناير", "reception": 6885, "clinic": 15597, "dialysis": 10, "catheter": 1115, "endoscopy": 0, "surgeries": 227, "internal": 226, "care": 948, "incubators": 6, "radiology": 7226, "labs": 53795, "births": 0, "deaths": 108 },
+  { "hospital": "القلب الرئيسى", "month": "فبراير", "reception": 5996, "clinic": 15909, "dialysis": 11, "catheter": 1024, "endoscopy": 0, "surgeries": 236, "internal": 266, "care": 860, "incubators": 3, "radiology": 7341, "labs": 51855, "births": 0, "deaths": 81 },
+  { "hospital": "القلب الرئيسى", "month": "مارس", "reception": 7036, "clinic": 12022, "dialysis": 11, "catheter": 960, "endoscopy": 0, "surgeries": 202, "internal": 167, "care": 846, "incubators": 6, "radiology": 5791, "labs": 51170, "births": 0, "deaths": 110 },
+  { "hospital": "القلب الرئيسى", "month": "ابريل", "reception": 7859, "clinic": 14641, "dialysis": 4, "catheter": 978, "endoscopy": 0, "surgeries": 192, "internal": 199, "care": 941, "incubators": 6, "radiology": 6524, "labs": 51975, "births": 0, "deaths": 54 },
+  { "hospital": "القلب الرئيسى", "month": "مايو", "reception": 7444, "clinic": 16447, "dialysis": 11, "catheter": 1188, "endoscopy": 0, "surgeries": 226, "internal": 211, "care": 852, "incubators": 10, "radiology": 7132, "labs": 54200, "births": 0, "deaths": 51 },
+  { "hospital": "القلب الرئيسى", "month": "يونيو", "reception": 7168, "clinic": 13914, "dialysis": 7, "catheter": 1051, "endoscopy": 0, "surgeries": 174, "internal": 162, "care": 849, "incubators": 5, "radiology": 5923, "labs": 48504, "births": 0, "deaths": 41 },
+  { "hospital": "القلب الرئيسى", "month": "يوليو", "reception": 10940, "clinic": 17485, "dialysis": 16, "catheter": 1227, "endoscopy": 0, "surgeries": 201, "internal": 192, "care": 929, "incubators": 7, "radiology": 7372, "labs": 47873, "births": 0, "deaths": 78 },
+  { "hospital": "القلب الرئيسى", "month": "اغسطس", "reception": 9712, "clinic": 17404, "dialysis": 24, "catheter": 1255, "endoscopy": 0, "surgeries": 229, "internal": 190, "care": 965, "incubators": 5, "radiology": 7444, "labs": 45658, "births": 0, "deaths": 98 },
+  { "hospital": "القلب الرئيسى", "month": "سبتمبر", "reception": 9180, "clinic": 16634, "dialysis": 33, "catheter": 1040, "endoscopy": 0, "surgeries": 228, "internal": 226, "care": 919, "incubators": 4, "radiology": 7215, "labs": 41472, "births": 0, "deaths": 104 },
+  { "hospital": "القلب الرئيسى", "month": "اكتوبر", "reception": 9304, "clinic": 16080, "dialysis": 9, "catheter": 1116, "endoscopy": 0, "surgeries": 219, "internal": 221, "care": 861, "incubators": 4, "radiology": 6941, "labs": 47616, "births": 0, "deaths": 113 },
+  { "hospital": "القلب الرئيسى", "month": "نوفمبر", "reception": 9421, "clinic": 16460, "dialysis": 11, "catheter": 1085, "endoscopy": 0, "surgeries": 195, "internal": 255, "care": 951, "incubators": 7, "radiology": 6688, "labs": 46636, "births": 0, "deaths": 112 },
+  { "hospital": "القلب الرئيسى", "month": "ديسمبر", "reception": 9332, "clinic": 16602, "dialysis": 15, "catheter": 1137, "endoscopy": 0, "surgeries": 202, "internal": 288, "care": 956, "incubators": 11, "radiology": 7923, "labs": 54090, "births": 0, "deaths": 124 },
+  { "hospital": "قلب المطار", "month": "يناير", "reception": 0, "clinic": 12810, "dialysis": 0, "catheter": 159, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 48, "incubators": 0, "radiology": 512, "labs": 3673, "births": 0, "deaths": 5 },
+  { "hospital": "قلب المطار", "month": "فبراير", "reception": 0, "clinic": 13171, "dialysis": 0, "catheter": 148, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 25, "incubators": 0, "radiology": 526, "labs": 3896, "births": 0, "deaths": 4 },
+  { "hospital": "قلب المطار", "month": "مارس", "reception": 0, "clinic": 8420, "dialysis": 0, "catheter": 142, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 44, "incubators": 0, "radiology": 409, "labs": 3521, "births": 0, "deaths": 0 },
+  { "hospital": "قلب المطار", "month": "ابريل", "reception": 0, "clinic": 12707, "dialysis": 0, "catheter": 125, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 51, "incubators": 0, "radiology": 565, "labs": 3581, "births": 0, "deaths": 4 },
+  { "hospital": "قلب المطار", "month": "مايو", "reception": 0, "clinic": 14295, "dialysis": 0, "catheter": 176, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 66, "incubators": 0, "radiology": 726, "labs": 5161, "births": 0, "deaths": 2 },
+  { "hospital": "قلب المطار", "month": "يونيو", "reception": 0, "clinic": 12482, "dialysis": 0, "catheter": 189, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 41, "incubators": 0, "radiology": 577, "labs": 4202, "births": 0, "deaths": 0 },
+  { "hospital": "قلب المطار", "month": "يوليو", "reception": 0, "clinic": 13456, "dialysis": 0, "catheter": 202, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 45, "incubators": 0, "radiology": 708, "labs": 4349, "births": 0, "deaths": 2 },
+  { "hospital": "قلب المطار", "month": "اغسطس", "reception": 0, "clinic": 12866, "dialysis": 0, "catheter": 186, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 50, "incubators": 0, "radiology": 747, "labs": 4340, "births": 0, "deaths": 4 },
+  { "hospital": "قلب المطار", "month": "سبتمبر", "reception": 0, "clinic": 12775, "dialysis": 0, "catheter": 299, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 48, "incubators": 0, "radiology": 749, "labs": 4255, "births": 0, "deaths": 2 },
+  { "hospital": "قلب المطار", "month": "اكتوبر", "reception": 0, "clinic": 13092, "dialysis": 0, "catheter": 316, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 48, "incubators": 0, "radiology": 831, "labs": 3951, "births": 0, "deaths": 6 },
+  { "hospital": "قلب المطار", "month": "نوفمبر", "reception": 0, "clinic": 14149, "dialysis": 0, "catheter": 371, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 47, "incubators": 0, "radiology": 631, "labs": 3736, "births": 0, "deaths": 3 },
+  { "hospital": "قلب المطار", "month": "ديسمبر", "reception": 0, "clinic": 14146, "dialysis": 0, "catheter": 398, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 63, "incubators": 0, "radiology": 797, "labs": 4172, "births": 0, "deaths": 3 },
+  { "hospital": "الكلى", "month": "يناير", "reception": 2995, "clinic": 3688, "dialysis": 3632, "catheter": 0, "endoscopy": 200, "surgeries": 58, "internal": 307, "care": 57, "incubators": 0, "radiology": 2484, "labs": 26568, "births": 0, "deaths": 19 },
+  { "hospital": "الكلى", "month": "فبراير", "reception": 2705, "clinic": 3692, "dialysis": 3636, "catheter": 0, "endoscopy": 220, "surgeries": 39, "internal": 344, "care": 44, "incubators": 0, "radiology": 2781, "labs": 26663, "births": 0, "deaths": 18 },
+  { "hospital": "الكلى", "month": "مارس", "reception": 3162, "clinic": 3164, "dialysis": 4197, "catheter": 0, "endoscopy": 173, "surgeries": 25, "internal": 274, "care": 47, "incubators": 0, "radiology": 2341, "labs": 23688, "births": 0, "deaths": 21 },
+  { "hospital": "الكلى", "month": "ابريل", "reception": 3248, "clinic": 3597, "dialysis": 3981, "catheter": 0, "endoscopy": 172, "surgeries": 38, "internal": 294, "care": 58, "incubators": 0, "radiology": 3014, "labs": 27554, "births": 0, "deaths": 23 },
+  { "hospital": "الكلى", "month": "مايو", "reception": 3245, "clinic": 3976, "dialysis": 3976, "catheter": 0, "endoscopy": 198, "surgeries": 53, "internal": 357, "care": 36, "incubators": 0, "radiology": 2374, "labs": 28741, "births": 0, "deaths": 12 },
+  { "hospital": "الكلى", "month": "يونيو", "reception": 3327, "clinic": 3864, "dialysis": 3946, "catheter": 0, "endoscopy": 171, "surgeries": 47, "internal": 269, "care": 48, "incubators": 0, "radiology": 2142, "labs": 30106, "births": 0, "deaths": 18 },
+  { "hospital": "الكلى", "month": "يوليو", "reception": 4019, "clinic": 4350, "dialysis": 4186, "catheter": 0, "endoscopy": 180, "surgeries": 75, "internal": 324, "care": 73, "incubators": 0, "radiology": 2386, "labs": 22641, "births": 0, "deaths": 23 },
+  { "hospital": "الكلى", "month": "اغسطس", "reception": 4025, "clinic": 4558, "dialysis": 4008, "catheter": 0, "endoscopy": 238, "surgeries": 88, "internal": 386, "care": 54, "incubators": 0, "radiology": 2672, "labs": 30457, "births": 0, "deaths": 18 },
+  { "hospital": "الكلى", "month": "سبتمبر", "reception": 3397, "clinic": 4659, "dialysis": 3924, "catheter": 0, "endoscopy": 245, "surgeries": 109, "internal": 368, "care": 52, "incubators": 0, "radiology": 2824, "labs": 32459, "births": 0, "deaths": 19 },
+  { "hospital": "الكلى", "month": "اكتوبر", "reception": 3370, "clinic": 3947, "dialysis": 3830, "catheter": 0, "endoscopy": 225, "surgeries": 88, "internal": 333, "care": 46, "incubators": 0, "radiology": 2325, "labs": 30377, "births": 0, "deaths": 16 },
+  { "hospital": "الكلى", "month": "نوفمبر", "reception": 2926, "clinic": 4477, "dialysis": 3849, "catheter": 0, "endoscopy": 236, "surgeries": 82, "internal": 398, "care": 43, "incubators": 0, "radiology": 2140, "labs": 32342, "births": 0, "deaths": 25 },
+  { "hospital": "الكلى", "month": "ديسمبر", "reception": 2940, "clinic": 4803, "dialysis": 4036, "catheter": 0, "endoscopy": 215, "surgeries": 119, "internal": 405, "care": 53, "incubators": 0, "radiology": 2458, "labs": 24807, "births": 0, "deaths": 25 },
+  { "hospital": "الرمد", "month": "يناير", "reception": 819, "clinic": 19202, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 749, "internal": 650, "care": 0, "incubators": 0, "radiology": 860, "labs": 2862, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "فبراير", "reception": 616, "clinic": 19507, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 602, "internal": 483, "care": 0, "incubators": 0, "radiology": 856, "labs": 1815, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "مارس", "reception": 745, "clinic": 12500, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 404, "internal": 325, "care": 0, "incubators": 0, "radiology": 524, "labs": 1648, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "ابريل", "reception": 541, "clinic": 17883, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 441, "internal": 341, "care": 0, "incubators": 0, "radiology": 856, "labs": 3811, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "مايو", "reception": 640, "clinic": 20030, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 571, "internal": 449, "care": 0, "incubators": 0, "radiology": 1012, "labs": 4025, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "يونيو", "reception": 904, "clinic": 17454, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 425, "internal": 351, "care": 0, "incubators": 0, "radiology": 802, "labs": 2960, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "يوليو", "reception": 989, "clinic": 22481, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 595, "internal": 461, "care": 0, "incubators": 0, "radiology": 1006, "labs": 4000, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "اغسطس", "reception": 1252, "clinic": 23429, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 694, "internal": 544, "care": 0, "incubators": 0, "radiology": 920, "labs": 4590, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "سبتمبر", "reception": 1402, "clinic": 22746, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 636, "internal": 472, "care": 0, "incubators": 0, "radiology": 964, "labs": 3168, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "اكتوبر", "reception": 1345, "clinic": 21811, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 821, "internal": 655, "care": 0, "incubators": 0, "radiology": 1000, "labs": 2980, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "نوفمبر", "reception": 1248, "clinic": 21739, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 784, "internal": 605, "care": 0, "incubators": 0, "radiology": 977, "labs": 3408, "births": 0, "deaths": 0 },
+  { "hospital": "الرمد", "month": "ديسمبر", "reception": 1149, "clinic": 19382, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 869, "internal": 679, "care": 0, "incubators": 0, "radiology": 944, "labs": 2779, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "يناير", "reception": 0, "clinic": 13541, "dialysis": 0, "catheter": 0, "endoscopy": 94, "surgeries": 138, "internal": 138, "care": 0, "incubators": 0, "radiology": 120, "labs": 906, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "فبراير", "reception": 0, "clinic": 14307, "dialysis": 0, "catheter": 0, "endoscopy": 137, "surgeries": 181, "internal": 181, "care": 0, "incubators": 0, "radiology": 136, "labs": 939, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "مارس", "reception": 0, "clinic": 9001, "dialysis": 0, "catheter": 0, "endoscopy": 137, "surgeries": 128, "internal": 128, "care": 0, "incubators": 0, "radiology": 63, "labs": 547, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "ابريل", "reception": 0, "clinic": 8120, "dialysis": 0, "catheter": 0, "endoscopy": 165, "surgeries": 102, "internal": 102, "care": 0, "incubators": 0, "radiology": 95, "labs": 1078, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "مايو", "reception": 0, "clinic": 14050, "dialysis": 0, "catheter": 0, "endoscopy": 190, "surgeries": 172, "internal": 172, "care": 0, "incubators": 0, "radiology": 103, "labs": 1418, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "يونيو", "reception": 0, "clinic": 12187, "dialysis": 0, "catheter": 0, "endoscopy": 180, "surgeries": 129, "internal": 129, "care": 0, "incubators": 0, "radiology": 76, "labs": 875, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "يوليو", "reception": 0, "clinic": 14688, "dialysis": 0, "catheter": 0, "endoscopy": 227, "surgeries": 161, "internal": 161, "care": 0, "incubators": 0, "radiology": 111, "labs": 1342, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "اغسطس", "reception": 0, "clinic": 18251, "dialysis": 0, "catheter": 0, "endoscopy": 191, "surgeries": 178, "internal": 178, "care": 0, "incubators": 0, "radiology": 82, "labs": 1276, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "سبتمبر", "reception": 0, "clinic": 16810, "dialysis": 0, "catheter": 0, "endoscopy": 235, "surgeries": 180, "internal": 180, "care": 0, "incubators": 0, "radiology": 63, "labs": 912, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "اكتوبر", "reception": 0, "clinic": 16085, "dialysis": 0, "catheter": 0, "endoscopy": 228, "surgeries": 179, "internal": 179, "care": 0, "incubators": 0, "radiology": 56, "labs": 980, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "نوفمبر", "reception": 0, "clinic": 14469, "dialysis": 0, "catheter": 0, "endoscopy": 205, "surgeries": 177, "internal": 177, "care": 0, "incubators": 0, "radiology": 81, "labs": 1146, "births": 0, "deaths": 0 },
+  { "hospital": "السمع والكلام", "month": "ديسمبر", "reception": 0, "clinic": 15028, "dialysis": 0, "catheter": 0, "endoscopy": 208, "surgeries": 169, "internal": 169, "care": 0, "incubators": 0, "radiology": 1, "labs": 754, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "يناير", "reception": 0, "clinic": 6273, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 18, "care": 0, "incubators": 0, "radiology": 826, "labs": 1865, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "فبراير", "reception": 0, "clinic": 9621, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 7, "care": 0, "incubators": 0, "radiology": 866, "labs": 1842, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "مارس", "reception": 0, "clinic": 5657, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 1, "care": 0, "incubators": 0, "radiology": 534, "labs": 1240, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "ابريل", "reception": 0, "clinic": 8527, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 7, "care": 0, "incubators": 0, "radiology": 719, "labs": 1982, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "مايو", "reception": 0, "clinic": 10638, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 12, "care": 0, "incubators": 0, "radiology": 858, "labs": 2268, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "يونيو", "reception": 0, "clinic": 8710, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 6, "care": 0, "incubators": 0, "radiology": 908, "labs": 2395, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "يوليو", "reception": 0, "clinic": 12442, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 8, "care": 0, "incubators": 0, "radiology": 1188, "labs": 3055, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "اغسطس", "reception": 0, "clinic": 12857, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 4, "care": 0, "incubators": 0, "radiology": 1086, "labs": 2687, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "سبتمبر", "reception": 0, "clinic": 11016, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 9, "care": 0, "incubators": 0, "radiology": 1052, "labs": 1694, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "اكتوبر", "reception": 0, "clinic": 10800, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 7, "care": 0, "incubators": 0, "radiology": 1005, "labs": 1271, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "نوفمبر", "reception": 0, "clinic": 9970, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 11, "care": 0, "incubators": 0, "radiology": 857, "labs": 1963, "births": 0, "deaths": 0 },
+  { "hospital": "التأهيل الحركي", "month": "ديسمبر", "reception": 0, "clinic": 9413, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 24, "care": 0, "incubators": 0, "radiology": 849, "labs": 2382, "births": 0, "deaths": 0 },
+  { "hospital": "السكر", "month": "يناير", "reception": 2017, "clinic": 16028, "dialysis": 0, "catheter": 80, "endoscopy": 0, "surgeries": 128, "internal": 577, "care": 241, "incubators": 0, "radiology": 998, "labs": 9500, "births": 0, "deaths": 9 },
+  { "hospital": "السكر", "month": "فبراير", "reception": 1629, "clinic": 14701, "dialysis": 0, "catheter": 80, "endoscopy": 0, "surgeries": 124, "internal": 548, "care": 197, "incubators": 0, "radiology": 994, "labs": 9136, "births": 0, "deaths": 5 },
+  { "hospital": "السكر", "month": "مارس", "reception": 2741, "clinic": 11001, "dialysis": 0, "catheter": 67, "endoscopy": 0, "surgeries": 108, "internal": 492, "care": 206, "incubators": 0, "radiology": 806, "labs": 8191, "births": 0, "deaths": 16 },
+  { "hospital": "السكر", "month": "ابريل", "reception": 2016, "clinic": 15070, "dialysis": 0, "catheter": 72, "endoscopy": 0, "surgeries": 78, "internal": 571, "care": 216, "incubators": 0, "radiology": 967, "labs": 10139, "births": 0, "deaths": 12 },
+  { "hospital": "السكر", "month": "مايو", "reception": 1804, "clinic": 13871, "dialysis": 0, "catheter": 78, "endoscopy": 0, "surgeries": 125, "internal": 537, "care": 217, "incubators": 0, "radiology": 955, "labs": 9788, "births": 0, "deaths": 8 },
+  { "hospital": "السكر", "month": "يونيو", "reception": 2003, "clinic": 13722, "dialysis": 0, "catheter": 61, "endoscopy": 0, "surgeries": 85, "internal": 501, "care": 199, "incubators": 0, "radiology": 1001, "labs": 10070, "births": 0, "deaths": 7 },
+  { "hospital": "السكر", "month": "يوليو", "reception": 2300, "clinic": 14165, "dialysis": 0, "catheter": 77, "endoscopy": 0, "surgeries": 124, "internal": 597, "care": 231, "incubators": 0, "radiology": 1027, "labs": 11086, "births": 0, "deaths": 13 },
+  { "hospital": "السكر", "month": "اغسطس", "reception": 2344, "clinic": 14939, "dialysis": 0, "catheter": 83, "endoscopy": 0, "surgeries": 134, "internal": 556, "care": 201, "incubators": 0, "radiology": 1014, "labs": 10052, "births": 0, "deaths": 16 },
+  { "hospital": "السكر", "month": "سبتمبر", "reception": 1938, "clinic": 16163, "dialysis": 0, "catheter": 55, "endoscopy": 0, "surgeries": 113, "internal": 554, "care": 247, "incubators": 0, "radiology": 895, "labs": 9990, "births": 0, "deaths": 6 },
+  { "hospital": "السكر", "month": "اكتوبر", "reception": 1780, "clinic": 16095, "dialysis": 0, "catheter": 86, "endoscopy": 0, "surgeries": 130, "internal": 548, "care": 301, "incubators": 0, "radiology": 993, "labs": 10349, "births": 0, "deaths": 7 },
+  { "hospital": "السكر", "month": "نوفمبر", "reception": 2347, "clinic": 16063, "dialysis": 0, "catheter": 92, "endoscopy": 3, "surgeries": 120, "internal": 582, "care": 259, "incubators": 0, "radiology": 909, "labs": 13283, "births": 0, "deaths": 11 },
+  { "hospital": "السكر", "month": "ديسمبر", "reception": 2328, "clinic": 15506, "dialysis": 0, "catheter": 64, "endoscopy": 3, "surgeries": 136, "internal": 649, "care": 276, "incubators": 0, "radiology": 1064, "labs": 13564, "births": 0, "deaths": 13 },
+  { "hospital": "الكبد", "month": "يناير", "reception": 0, "clinic": 4202, "dialysis": 6, "catheter": 0, "endoscopy": 311, "surgeries": 44, "internal": 162, "care": 69, "incubators": 0, "radiology": 1388, "labs": 14532, "births": 0, "deaths": 23 },
+  { "hospital": "الكبد", "month": "فبراير", "reception": 0, "clinic": 4070, "dialysis": 6, "catheter": 0, "endoscopy": 336, "surgeries": 55, "internal": 159, "care": 61, "incubators": 0, "radiology": 1386, "labs": 12114, "births": 0, "deaths": 13 },
+  { "hospital": "الكبد", "month": "مارس", "reception": 0, "clinic": 3721, "dialysis": 6, "catheter": 0, "endoscopy": 282, "surgeries": 30, "internal": 159, "care": 61, "incubators": 0, "radiology": 1097, "labs": 9089, "births": 0, "deaths": 12 },
+  { "hospital": "الكبد", "month": "ابريل", "reception": 0, "clinic": 3744, "dialysis": 2, "catheter": 0, "endoscopy": 257, "surgeries": 36, "internal": 170, "care": 73, "incubators": 0, "radiology": 1230, "labs": 9504, "births": 0, "deaths": 14 },
+  { "hospital": "الكبد", "month": "مايو", "reception": 0, "clinic": 4452, "dialysis": 2, "catheter": 0, "endoscopy": 298, "surgeries": 50, "internal": 212, "care": 71, "incubators": 0, "radiology": 1529, "labs": 12307, "births": 0, "deaths": 21 },
+  { "hospital": "الكبد", "month": "يونيو", "reception": 0, "clinic": 3597, "dialysis": 3, "catheter": 0, "endoscopy": 312, "surgeries": 42, "internal": 173, "care": 77, "incubators": 0, "radiology": 1378, "labs": 10263, "births": 0, "deaths": 17 },
+  { "hospital": "الكبد", "month": "يوليو", "reception": 0, "clinic": 4185, "dialysis": 9, "catheter": 0, "endoscopy": 425, "surgeries": 61, "internal": 198, "care": 72, "incubators": 0, "radiology": 1664, "labs": 11608, "births": 0, "deaths": 21 },
+  { "hospital": "الكبد", "month": "اغسطس", "reception": 0, "clinic": 4700, "dialysis": 9, "catheter": 0, "endoscopy": 415, "surgeries": 53, "internal": 197, "care": 66, "incubators": 0, "radiology": 1754, "labs": 9929, "births": 0, "deaths": 12 },
+  { "hospital": "الكبد", "month": "سبتمبر", "reception": 0, "clinic": 4433, "dialysis": 3, "catheter": 0, "endoscopy": 369, "surgeries": 45, "internal": 237, "care": 61, "incubators": 0, "radiology": 1742, "labs": 11039, "births": 0, "deaths": 18 },
+  { "hospital": "الكبد", "month": "اكتوبر", "reception": 0, "clinic": 4483, "dialysis": 11, "catheter": 0, "endoscopy": 245, "surgeries": 55, "internal": 224, "care": 69, "incubators": 0, "radiology": 1548, "labs": 10942, "births": 0, "deaths": 18 },
+  { "hospital": "الكبد", "month": "نوفمبر", "reception": 0, "clinic": 4502, "dialysis": 1, "catheter": 0, "endoscopy": 309, "surgeries": 46, "internal": 214, "care": 72, "incubators": 0, "radiology": 1629, "labs": 10908, "births": 0, "deaths": 16 },
+  { "hospital": "الكبد", "month": "ديسمبر", "reception": 0, "clinic": 5330, "dialysis": 13, "catheter": 0, "endoscopy": 287, "surgeries": 54, "internal": 192, "care": 76, "incubators": 0, "radiology": 1561, "labs": 9085, "births": 0, "deaths": 22 },
+  { "hospital": "التغذية", "month": "يناير", "reception": 0, "clinic": 2149, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 456, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "فبراير", "reception": 0, "clinic": 2625, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 381, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "مارس", "reception": 0, "clinic": 1065, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 123, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "ابريل", "reception": 0, "clinic": 2428, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 363, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "مايو", "reception": 0, "clinic": 2978, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 398, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "يونيو", "reception": 0, "clinic": 2958, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 292, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "يوليو", "reception": 0, "clinic": 4223, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 299, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "اغسطس", "reception": 0, "clinic": 4754, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 918, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "سبتمبر", "reception": 0, "clinic": 3471, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 679, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "اكتوبر", "reception": 0, "clinic": 2954, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 626, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "نوفمبر", "reception": 0, "clinic": 3010, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 314, "births": 0, "deaths": 0 },
+  { "hospital": "التغذية", "month": "ديسمبر", "reception": 0, "clinic": 2853, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 484, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "يناير", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 23, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "فبراير", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 16, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "مارس", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 23, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "ابريل", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 41, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "مايو", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 26, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "يونيو", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 23, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "يوليو", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 27, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "اغسطس", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 31, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "سبتمبر", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 2, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "اكتوبر", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 22, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "نوفمبر", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 22, "births": 0, "deaths": 0 },
+  { "hospital": "بحوث الحشرات", "month": "ديسمبر", "reception": 0, "clinic": 0, "dialysis": 0, "catheter": 0, "endoscopy": 0, "surgeries": 0, "internal": 0, "care": 0, "incubators": 0, "radiology": 0, "labs": 18, "births": 0, "deaths": 0 }
+];
+
+        // تعريف التخصصات مع أسمائها العربية ورموزها وألوانها
+        const specialties = [
+            { id: "reception", name: "تردد الاستقبال", icon: "fa-hospital-user", color: "#1a73e8" },
+            { id: "clinic", name: "تردد العيادة", icon: "fa-user-md", color: "#34a853" },
+            { id: "dialysis", name: "الغسيل الكلوى", icon: "fa-ambulance", color: "#9c27b0" },
+            { id: "catheter", name: "نشاط القسطرة", icon: "fa-heartbeat", color: "#ff9800" },
+            { id: "endoscopy", name: "نشاط المناظير", icon: "fa-microscope", color: "#009688" },
+            { id: "surgeries", name: "نشاط العمليات", icon: "fa-procedures", color: "#fbbc05" },
+            { id: "internal", name: "النشاط الداخلى", icon: "fa-bed", color: "#795548" },
+            { id: "care", name: "نشاط الرعايات", icon: "fa-hand-holding-medical", color: "#607d8b" },
+            { id: "incubators", name: "نشاط الحضانات", icon: "fa-baby", color: "#e91e63" },
+            { id: "radiology", name: "نشاط الاشعة", icon: "fa-x-ray", color: "#3f51b5" },
+            { id: "labs", name: "نشاط المعامل", icon: "fa-flask", color: "#00bcd4" },
+            { id: "births", name: "الولادات", icon: "fa-baby-carriage", color: "#ea4335" },
+            { id: "deaths", name: "الوفيات", icon: "fa-cross", color: "#757575" }
+        ];
+
+        // عناصر DOM
+        const hospitalFilter = document.getElementById('hospitalFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const resetFiltersBtn = document.getElementById('resetFilters');
+        const tabsHeader = document.getElementById('tabsHeader');
+        const allStatsContainer = document.getElementById('allStatsContainer');
+        const viewByHospitalsBtn = document.getElementById('viewByHospitals');
+        const viewByMonthsBtn = document.getElementById('viewByMonths');
+        const chartTitle = document.getElementById('chartTitle');
+
+        let currentViewMode = 'hospitals'; // 'hospitals' أو 'months'
+        let specialtyCharts = {};
+        let currentSpecialtyTab = null;
+
+        // تسجيل إضافة تسميات البيانات
+        Chart.register(ChartDataLabels);
+
+        // تهيئة الفلاتر
+        function initializeFilters() {
+            // استخراج أسماء المستشفيات الفريدة
+            const hospitals = [...new Set(hospitalData.map(item => item.hospital))];
+            
+            // إضافة خيارات المستشفيات
+            hospitals.forEach(hospital => {
+                const option = document.createElement('option');
+                option.value = hospital;
+                option.textContent = hospital;
+                hospitalFilter.appendChild(option);
+            });
+            
+            // إضافة تبويبات التخصصات
+            specialties.forEach(specialty => {
+                const tabBtn = document.createElement('button');
+                tabBtn.className = 'tab-btn';
+                tabBtn.setAttribute('data-tab', specialty.id);
+                tabBtn.innerHTML = `<i class="fas ${specialty.icon}"></i> ${specialty.name}`;
+                tabsHeader.appendChild(tabBtn);
+                
+                // إنشاء محتوى التبويب
+                const tabContent = document.createElement('div');
+                tabContent.id = specialty.id;
+                tabContent.className = 'tab-content';
+                tabContent.innerHTML = `
+                    <div class="specialty-info">
+                        <h4>${specialty.name}</h4>
+                        <div class="total-value" id="total-${specialty.id}">0</div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3><i class="fas ${specialty.icon}"></i> أعلى مستشفيات حسب ${specialty.name}</h3>
+                            <div class="chart-toggle-buttons">
+                                <button class="chart-toggle-btn active" data-specialty="${specialty.id}" data-view="hospitals">
+                                    <i class="fas fa-hospital"></i> حسب المستشفيات
+                                </button>
+                                <button class="chart-toggle-btn" data-specialty="${specialty.id}" data-view="months">
+                                    <i class="fas fa-calendar-alt"></i> حسب الشهور
+                                </button>
+                            </div>
+                        </div>
+                        <canvas id="${specialty.id}-chart"></canvas>
+                    </div>
+                `;
+                document.querySelector('.tabs-container').appendChild(tabContent);
+            });
+            
+            // إضافة مستمعي الأحداث للتبويبات
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // إزالة النشاط من جميع الأزرار
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    // إخفاء جميع المحتويات
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    // تفعيل الزر المحدد
+                    btn.classList.add('active');
+                    // عرض المحتوى المحدد
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // إذا كان التبويب تخصص معين، قم بتحديث الرسوم البيانية الخاصة به
+                    if (tabId !== 'all-stats') {
+                        currentSpecialtyTab = tabId;
+                        updateSpecialtyTab(tabId);
+                    }
+                });
+            });
+            
+            
+            // إضافة مستمعي الأحداث لزرين التبويبات الأخرى
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.chart-toggle-btn')) {
+                    const btn = e.target.closest('.chart-toggle-btn');
+                    const specialtyId = btn.getAttribute('data-specialty');
+                    const view = btn.getAttribute('data-view');
+                    currentViewMode = view
+                    
+                    if (specialtyId && view) {
+                        // تحديث حالة الأزرار
+                        const buttons = document.querySelectorAll(`[data-specialty="${specialtyId}"]`);
+                        buttons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        // switchViewMode(currentViewMode);
+                        // تحديث المخطط الخاص بهذا التخصص
+                        updateSpecialtyChart(specialtyId, currentViewMode);
+                    }
+                }
+            });
+            
+            // إضافة مستمعي الأحداث للفلاتر
+            hospitalFilter.addEventListener('change', updateDashboard);
+            monthFilter.addEventListener('change', updateDashboard);
+            
+            resetFiltersBtn.addEventListener('click', resetFilters);
+        }
+
+
+        // تصفية البيانات بناءً على الفلاتر
+        function filterData() {
+            let filteredData = [...hospitalData];
+            
+            // تصفية حسب المستشفى
+            if (hospitalFilter.value !== 'all') {
+                filteredData = filteredData.filter(item => item.hospital === hospitalFilter.value);
+            }
+            
+            // تصفية حسب الشهر
+            if (monthFilter.value !== 'all') {
+                filteredData = filteredData.filter(item => item.month === monthFilter.value);
+            }
+            
+            return filteredData;
+        }
+
+        // تحديث جميع الإحصائيات
+        function updateAllStats(data) {
+            allStatsContainer.innerHTML = '';
+            
+            specialties.forEach(specialty => {
+                const total = data.reduce((sum, item) => sum + item[specialty.id], 0);
+                
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-icon" style="background-color: ${specialty.color}20; color: ${specialty.color};">
+                        <i class="fas ${specialty.icon}"></i>
+                    </div>
+                    <div class="stat-value" style="color: ${specialty.color};">${formatNumber(total)}</div>
+                    <div class="stat-label">${specialty.name}</div>
+                `;
+                
+                // إضافة حدث النقر للانتقال إلى تبويب التخصص
+                statCard.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    const specialtyTabBtn = document.querySelector(`.tab-btn[data-tab="${specialty.id}"]`);
+                    const specialtyTabContent = document.getElementById(specialty.id);
+                    
+                    specialtyTabBtn.classList.add('active');
+                    specialtyTabContent.classList.add('active');
+                    currentSpecialtyTab = specialty.id;
+                    updateSpecialtyTab(specialty.id);
+                });
+                
+                statCard.style.cursor = 'pointer';
+                allStatsContainer.appendChild(statCard);
+            });
+
+
+        }
+
+
+
+        // تحديث تبويب التخصص المحدد
+        function updateSpecialtyTab(specialtyId) {
+            const data = filterData();
+            const specialty = specialties.find(s => s.id === specialtyId);
+            
+            if (!specialty) return;
+            
+            // تحديث الإجمالي
+            const total = data.reduce((sum, item) => sum + item[specialtyId], 0);
+            document.getElementById(`total-${specialtyId}`).textContent = formatNumber(total);
+            
+            // تحديث المخطط الخاص بهذا التخصص
+            updateSpecialtyChart(specialtyId, currentViewMode);
+        }
+
+        // تحديث مخطط التخصص
+        function updateSpecialtyChart(specialtyId, viewMode) {
+            const ctx = document.getElementById(`${specialtyId}-chart`).getContext('2d');
+            const data = filterData();
+            const specialty = specialties.find(s => s.id === specialtyId);
+            
+            if (!specialty) return;
+            
+            // تدمير المخطط القديم إذا كان موجودًا
+            if (specialtyCharts[specialtyId]) {
+                specialtyCharts[specialtyId].destroy();
+            }
+            
+            let labels, chartData;
+            
+            if (viewMode === 'hospitals') {
+                // تجميع البيانات حسب المستشفى
+                const hospitals = [...new Set(data.map(item => item.hospital))];
+                
+                // حساب إجمالي التخصص لكل مستشفى
+                const hospitalTotals = hospitals.map(hospital => {
+                    const hospitalData = data.filter(item => item.hospital === hospital);
+                    const total = hospitalData.reduce((sum, item) => sum + item[specialtyId], 0);
+                    return { hospital, total };
+                });
+                
+                // ترتيب المستشفيات وتحديد أعلى 15
+                hospitalTotals.sort((a, b) => b.total - a.total);
+                const topHospitals = hospitalTotals.slice(0, 30);
+                
+                labels = topHospitals.map(item => item.hospital);
+                chartData = topHospitals.map(item => item.total);
+                
+            } else {
+                // ترتيب الشهور
+                const monthsOrder = ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", 
+                                   "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"];
+                
+                // حساب إجمالي التخصص لكل شهر
+                const monthTotals = monthsOrder.map(month => {
+                    const monthData = data.filter(item => item.month === month);
+                    const total = monthData.reduce((sum, item) => sum + item[specialtyId], 0);
+                    return total;
+                });
+                
+                labels = monthsOrder;
+                chartData = monthTotals;
+            }
+            
+            // إنشاء المخطط الجديد
+            specialtyCharts[specialtyId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: specialty.name,
+                        data: chartData,
+                        backgroundColor: specialty.color + '80',
+                        borderColor: specialty.color,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatNumber(context.raw);
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'center',
+                            align: 'top',  
+                            rotation: -90,
+                            offset: 20,  
+                            formatter: function(value) {
+                                return formatNumber(value);
+                            },
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            padding: 4
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // تحديث لوحة المعلومات
+        function updateDashboard() {
+            const filteredData = filterData();
+            
+            // تحديث الإحصائيات الشاملة
+            updateAllStats(filteredData);
+            
+            // تحديث المخطط الرئيسي
+            // updateMainChart();
+            
+            // إذا كان هناك تبويب تخصص نشط، قم بتحديثه
+            if (currentSpecialtyTab) {
+                updateSpecialtyTab(currentSpecialtyTab);
+            }
+        }
+
+        // إعادة تعيين الفلاتر
+        function resetFilters() {
+            hospitalFilter.value = 'all';
+            monthFilter.value = 'all';
+            
+            // العودة إلى تبويب الإحصائيات الشاملة
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            const allStatsBtn = document.querySelector('.tab-btn[data-tab="all-stats"]');
+            const allStatsContent = document.getElementById('all-stats');
+            
+            allStatsBtn.classList.add('active');
+            allStatsContent.classList.add('active');
+            currentSpecialtyTab = null;
+            
+            // إعادة تعيين وضع العرض إلى المستشفيات
+            // switchViewMode(currentViewMode);
+            
+            updateDashboard();
+        }
+
+        // تنسيق الأرقام بإضافة فواصل
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // تهيئة التطبيق
+        function init() {
+            initializeFilters();
+            updateDashboard();
+        }
+
+        // بدء التطبيق عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

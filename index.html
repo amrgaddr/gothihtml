@@ -8161,6 +8161,7 @@ let allData = [{
 
     // تعريف التخصصات مع تحديث المفاتيح لتتناسب مع allData
     const specialties = [
+      // { id: "الأسرة", name: "الأسرة", icon: "fa-bed", color: "#758577" },
         { id: "تردد الاستقبال", name: "تردد الاستقبال", icon: "fa-hospital-user", color: "#1a73e8" },
         { id: "تردد العيادة", name: "تردد العيادة", icon: "fa-user-md", color: "#34a853" },
         { id: "الغسيل الكلوى", name: "الغسيل الكلوى", icon: "fa-ambulance", color: "#9c27b0" },
@@ -8205,6 +8206,13 @@ let allData = [{
 
     // تحديد الشهر الحالي يدوياً (رقم من 1 إلى 12) - تغيير هذا كل شهر
     let currentMonthNumber = 12; // 12 = ديسمبر
+
+
+            // تحويل رقم الشهر إلى اسم الشهر
+        const monthsNames = ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", 
+                            "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"];
+        const currentMonthName = monthsNames[currentMonthNumber - 1];
+
 
     // تسجيل إضافة تسميات البيانات
     Chart.register(ChartDataLabels);
@@ -8399,17 +8407,53 @@ let allData = [{
             statCard.style.cursor = 'pointer';
             allStatsContainer.appendChild(statCard);
         });
+
+
+        // add beds stat card
+      const statCard = document.createElement('div');
+            statCard.className = 'stat-card';
+            statCard.innerHTML = `
+                <div class="stat-icon" style="background-color: #75857720; color: #758577;">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <div class="stat-value" style="color: #758577;">${formatNumber(bedsStat())}</div>
+                <div class="stat-label">الأسرة</div>
+            `;
+            allStatsContainer.appendChild(statCard);
+            statCard.style.cursor = 'pointer';
+            statCard.addEventListener("click",()=>{document.querySelector('button[data-tab="beds-tab"]').click()})
+
+
     }
 
+
+function bedsStat (){
+  let data = filterData();
+  let monthToGet = currentMonthName;
+
+  // get bed data by month or by last month add manually
+  data = monthFilter.value === "all" ?  data.filter(item => item["الشهر"] === monthToGet) : data.filter(item => item["الشهر"] === monthFilter.value);
+
+  let bedsCount = 0;
+
+  bedsData.forEach(bedData => {
+
+      data.forEach(bedfromdata => {
+        bedsCount += +bedfromdata[bedData.id];
+
+      })
+  })
+
+console.log(bedsCount);
+
+  return bedsCount;
+}
     // تحديث تبويب الأسرة
     function updateBedsTab() {
         const data = filterData();
         const bedsStatsContainer = document.getElementById('bedsStatsContainer');
         
-        // تحويل رقم الشهر إلى اسم الشهر
-        const monthsNames = ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", 
-                            "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"];
-        const currentMonthName = monthsNames[currentMonthNumber - 1];
+
         
         // حساب إجمالي جميع الأسرة مع معالجة خاصة للتصفية حسب الشهر
         let totalBeds = 0;
@@ -8878,10 +8922,25 @@ let allData = [{
         });
     }
 
+// تحديث معلومات الفلتر والتحكم
+
+        let hospitaltoget ="";
+        let monthtoget ="";
+
+      // function getfilteroption(){
+      // hospitaltoget =  hospitalFilter.value;
+      // monthtoget = monthFilter.value;
+
+      // console.log(hospitaltoget,monthtoget);
+      // }
+
+
     // تحديث لوحة المعلومات
     function updateDashboard() {
         const filteredData = filterData();
-        
+      
+        // getfilteroption();
+bedsStat ();
         // تحديث الإحصائيات الشاملة
         updateAllStats(filteredData);
         

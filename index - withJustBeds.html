@@ -8550,7 +8550,13 @@ let allData = [{
                 labels = topHospitals.map(item => item.hospital);
                 chartData = topHospitals.map(item => item.total);
                 
-            }else if (!hospitalFilterActive && !monthFilterActive) {
+            }
+            
+            
+            
+            
+            
+             else if (!hospitalFilterActive && !monthFilterActive) {
                 // لا يوجد فلاتر، استخدم الشهر الحالي
                 const currentMonthData = allData.filter(item => item["الشهر"] === currentMonthName);
                 const hospitals = [...new Set(currentMonthData.map(item => item["المستشفى"]))];
@@ -8597,6 +8603,33 @@ let allData = [{
                 chartData = topHospitals.map(item => item.total);
             }
             
+            
+            
+            // else if (!monthFilterActive && !hospitalFilterActive) {
+            //     // حالة خاصة: لا توجد تصفية، نستخدم الشهر الحالي
+            //     const currentMonthData = allData.filter(item => item["الشهر"] === currentMonthName);
+            //     const hospitals = [...new Set(currentMonthData.map(item => item["المستشفى"]))];
+                
+            //     const hospitalTotals = hospitals.map(hospital => {
+            //         const hospitalData = currentMonthData.filter(item => item["المستشفى"] === hospital);
+            //         if (hospitalData.length > 0) {
+            //             let totalBeds = 0;
+            //             bedsData.forEach(bedType => {
+            //                 totalBeds += hospitalData[0][bedType.id] || 0;
+            //             });
+            //             return { hospital, total: totalBeds };
+            //         }
+            //         return { hospital, total: 0 };
+            //     });
+                
+            //     hospitalTotals.sort((a, b) => b.total - a.total);
+            //     const topHospitals = hospitalTotals.slice(0, 30);
+                
+            //     labels = topHospitals.map(item => item.hospital);
+            //     chartData = topHospitals.map(item => item.total);
+                
+            // } 
+            
             else {
                 // الحالات الأخرى
                 const hospitals = [...new Set(data.map(item => item["المستشفى"]))];
@@ -8621,7 +8654,7 @@ let allData = [{
                 chartData = topHospitals.map(item => item.total);
             }
             
-        } else {  
+        } else {
             // عرض حسب الشهور
             const monthsOrder = ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", 
                                "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"];

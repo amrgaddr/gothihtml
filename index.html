@@ -9127,6 +9127,7 @@ function bedsStat (){
                                "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"];
             
             if (hospitalFilterActive) {
+
                 // حالة: مستشفى محدد، نريد عرض الشهور لهذا المستشفى
                 const filteredByHospital = endoscopiesDataFiltered.filter(item => item["المستشفى"] === hospitalFilter.value);
                 
@@ -9149,44 +9150,45 @@ function bedsStat (){
                 chartData = monthTotals;
                 
             } else {
+
+
+                               
                 // حالة: لا يوجد مستشفى محدد
                 // إذا كان هناك فلتر شهر، نعرض المستشفيات في ذلك الشهر
                 if (monthFilterActive) {
+
+
                     const filteredByMonth = endoscopiesDataFiltered.filter(item => item["الشهر"] === monthFilter.value);
-                    const hospitals = [...new Set(filteredByMonth.map(item => item["المستشفى"]))];
+
+                    const hospitals = [...new Set(filteredByMonth.map(item => item["الشهر"]))];
                     
-                    const hospitalTotals = hospitals.map(hospital => {
-                        const hospitalEndoscopies = filteredByMonth.filter(item => item["المستشفى"] === hospital);
-                        if (hospitalEndoscopies.length > 0) {
+                    const monthsTotals = monthsOrder.map(filteredMonth => {
+                        // const hospitalEndoscopies = filteredByMonth.filter(item => item["الشهر"] === monthFilter.value);
+                        if (filteredByMonth.length > 0 && filteredMonth === monthFilter.value) {
                             let totalEndoscopies = 0;
                             endoscopiesDataNames.forEach(endoscopy => {
-                                const endoscopiesBySpecialty = hospitalEndoscopies.filter(item => 
+                                const endoscopiesBySpecialty = filteredByMonth.filter(item => 
                                     item["التخصص"] === endoscopy.id
                                 );
                                 totalEndoscopies += endoscopiesBySpecialty.reduce((sum, item) => sum + (item["عدد الحالات"] || 0), 0);
                             });
-                            return { hospital, total: totalEndoscopies };
+
+
+                            return { filteredMonth, total: totalEndoscopies };
                         }
-                        return { hospital, total: 0 };
+                        return { filteredMonth, total: 0 };
                     });
                     
-                    hospitalTotals.sort((a, b) => b.total - a.total);
-                    const topHospitals = hospitalTotals.slice(0, 30);
+
                     
-                    labels = topHospitals.map(item => item.hospital);
-                    chartData = topHospitals.map(item => item.total);
-                    
-                    // // تغيير وضع العرض تلقائياً ليكون حسب المستشفيات
-                    // if (document.querySelector('[data-specialty="endoscopies"][data-view="months"]').classList.contains('active')) {
-                    //     document.querySelector('[data-specialty="endoscopies"][data-view="months"]').classList.remove('active');
-                    //     document.querySelector('[data-specialty="endoscopies"][data-view="hospitals"]').classList.add('active');
-                    //     currentViewMode = 'hospitals';
-                    //     // أعد استدعاء الدالة بالنمط الجديد
-                    //     setTimeout(() => updateEndoscopiesChart('hospitals'), 0);
-                    //     return;
-                    // }
+                    labels = monthsOrder;
+                    chartData = monthsTotals.map(item => item.total);
+
                     
                 } else {
+
+
+
                     // لا يوجد أي فلتر، نعرض الشهور (إجمالي جميع المستشفيات لكل شهر)
                     const monthTotals = monthsOrder.map(month => {
                         const monthEndoscopies = endoscopiesData.filter(item => item["الشهر"] === month);
